@@ -47,7 +47,7 @@ class Stage3DTexture extends BasicAsset<Stage3DTexture>
     public function init (context3D :Context3D, optimizeForRenderToTexture :Bool)
     {
         assertNotDisposed();
-
+		
         nativeTexture = context3D.createTexture(_widthPow2, _heightPow2,
             BGRA, optimizeForRenderToTexture);
     }
@@ -55,7 +55,7 @@ class Stage3DTexture extends BasicAsset<Stage3DTexture>
     public function uploadBitmapData (bitmapData :BitmapData)
     {
         assertNotDisposed();
-
+		
         if (_widthPow2 != bitmapData.width || _heightPow2 != bitmapData.height) {
             // Resize up to the next power of two, padding with transparent black
             var resized = new BitmapData(_widthPow2, _heightPow2, true, 0x00000000);
@@ -63,33 +63,40 @@ class Stage3DTexture extends BasicAsset<Stage3DTexture>
             drawBorder(resized, bitmapData.width, bitmapData.height);
             nativeTexture.uploadFromBitmapData(resized);
             resized.dispose();
-
-        } else {
+			
+		} else {
             nativeTexture.uploadFromBitmapData(bitmapData);
         }
     }
-
+	
     public function readPixels (x :Int, y :Int, width :Int, height :Int) :Bytes
     {
         assertNotDisposed();
-
-        var bitmapData = _renderer.batcher.readPixels(this, x, y, width, height);
+		
+		var bitmapData = _renderer.batcher.readPixels(this, x, y, width, height);
         var pixels = Bytes.ofData(bitmapData.getPixels(new Rectangle(0, 0, width, height)));
-        bitmapData.dispose();
-
+		bitmapData.dispose();
+		
         var ii = 0, ll = pixels.length;
         while (ii < ll) {
             // Convert from ARGB to RGBA
-            var alpha = pixels.get(ii);
-            pixels.set(ii, pixels.get(++ii));
-            pixels.set(ii, pixels.get(++ii));
-            pixels.set(ii, pixels.get(++ii));
-            pixels.set(ii, alpha);
-            ++ii;
+			
+            var a = pixels.get(ii);
+            var r = pixels.get(ii + 1);
+            var g = pixels.get(ii + 2);
+            var b = pixels.get(ii + 3);
+			
+			pixels.set(ii, r);
+			pixels.set(ii + 1, g);
+			pixels.set(ii + 2, b);
+			pixels.set(ii + 3, a);
+			
+			ii += 4;
         }
+		
         return pixels;
     }
-
+	
     public function writePixels (pixels :Bytes, x :Int, y :Int, sourceW :Int, sourceH :Int)
     {
         assertNotDisposed();
