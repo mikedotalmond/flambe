@@ -80,23 +80,16 @@ class Stage3DTexture extends BasicAsset<Stage3DTexture>
         var ii = 0, ll = pixels.length;
         while (ii < ll) {
             // Convert from ARGB to RGBA
-			
             var a = pixels.get(ii);
-            var r = pixels.get(ii + 1);
-            var g = pixels.get(ii + 2);
-            var b = pixels.get(ii + 3);
-			
-			pixels.set(ii, r);
-			pixels.set(ii + 1, g);
-			pixels.set(ii + 2, b);
-			pixels.set(ii + 3, a);
-			
-			ii += 4;
+            pixels.set(ii, pixels.get(++ii));
+            pixels.set(ii, pixels.get(++ii));
+            pixels.set(ii, pixels.get(++ii));
+            pixels.set(ii, a);
+            ++ii;
         }
-		
         return pixels;
     }
-	
+
     public function writePixels (pixels :Bytes, x :Int, y :Int, sourceW :Int, sourceH :Int)
     {
         assertNotDisposed();
