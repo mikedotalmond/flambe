@@ -38,12 +38,14 @@ class MovieSprite extends Sprite
     public var frame(get, set):Float;
     inline function get_frame():Float return _frame;
     inline function set_frame(value:Float):Float {
-        goto(value);
+		_lastLabelFrame = -1;
+        _position = value / symbol.frameRate;
+		goto(value);
 		return _frame;
     }
 
-	public var totalFrames(get_totalFrames, null):Float;
-	inline function get_totalFrames():Float return symbol.duration / symbol.frameRate;
+	public var totalFrames(get_totalFrames, never):Int;
+	inline function get_totalFrames():Int return Math.ceil(symbol.duration / symbol.frameRate);
 	
     /** Whether this movie is currently paused. */
     public var paused (get, set) :Bool;
@@ -54,10 +56,16 @@ class MovieSprite extends Sprite
 	public var hasFrameLabels(default, null):Bool = false;
 	public var labelPassed(default, null):Signal1<String>;
 	
+	var _frameLabels:Array<String>;
+	public var frameLabels(get, never):Array<String>;
+	function get_frameLabels() {
+		if (_frameLabels == null) _frameLabels = Lambda.array(_framesToLabels);
+		return _frameLabels;
+	}
+	
     public function new (symbol :MovieSymbol)
     {
         super();
-		
         this.symbol 	= symbol;
 		
 		readFrameLabels();
@@ -78,7 +86,7 @@ class MovieSprite extends Sprite
     }
 	
 	/**
-	 * 
+	 *
 	 */
 	function readFrameLabels() {
 		hasFrameLabels 	= false;
@@ -225,7 +233,7 @@ class MovieSprite extends Sprite
         }
 		
         _frame = newFrame;
-    	
+
 		
 		if (hasFrameLabels) {
 			var iframe = Std.int(_frame);
@@ -236,21 +244,37 @@ class MovieSprite extends Sprite
         }
     }
 	
-	public inline function stop() {
-		speed._ = 0;
+	public function stop(stopChildren:Bool=true) {
+		speed._ = 0; _lastLabelFrame = -1;
+		if(stopChildren) {
+			for (ani in _animators) {
+				var spr = ani.content.get(MovieSprite);
+				if (Std.is(spr, MovieSprite)) {
+					spr.stop();
+				}
+			}
+		}
 	}
 
-	public inline function play() {
-		speed._ = 1;
+	public function play(playChildren:Bool=true) {
+		speed._ = 1; _lastLabelFrame = -1;
+		if(playChildren) {
+			for (ani in _animators) {
+				var spr = ani.content.get(MovieSprite);
+				if (Std.is(spr, MovieSprite)) {
+					spr.play();
+				}
+			}
+		}
 	}
 	
 
-    inline private function get_position () :Float 
+    inline private function get_position () :Float
 	{
 		return _position;
 	}
 	
-    private function set_position (position :Float) :Float 
+    private function set_position (position :Float) :Float
 	{
 		return _position = FMath.clamp(position, 0, symbol.duration);
 	}
@@ -260,7 +284,7 @@ class MovieSprite extends Sprite
 		return _flags.contains(Sprite.MOVIESPRITE_PAUSED);
 	}
 
-    private function set_paused (paused :Bool) 
+    private function set_paused (paused :Bool)
 	{
         _flags = _flags.set(Sprite.MOVIESPRITE_PAUSED, paused);
         return paused;
@@ -289,7 +313,7 @@ class MovieSprite extends Sprite
     private var _animators :Array<LayerAnimator>;
 	private var _position :Float;
     private var _frame :Float;
-    
+
 	private var _looped :Signal0 = null;
 	
 	var _framesToLabels:Map<Int,String>;
