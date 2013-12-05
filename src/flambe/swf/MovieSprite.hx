@@ -7,8 +7,11 @@ package flambe.swf;
 import flambe.animation.AnimatedFloat;
 import flambe.display.Sprite;
 import flambe.math.FMath;
+
 import flambe.swf.MovieSymbol;
 import flambe.util.Signal0;
+import flambe.util.Signal1.Signal1;
+
 
 using flambe.util.Arrays;
 using flambe.util.BitSets;
@@ -32,29 +35,111 @@ class MovieSprite extends Sprite
      */
     public var speed (default, null) :AnimatedFloat;
 
+    public var frame(get, set):Float;
+    inline function get_frame():Float return _frame;
+    inline function set_frame(value:Float):Float {
+        goto(value);
+		return _frame;
+    }
+
+	public var totalFrames(get_totalFrames, null):Float;
+	inline function get_totalFrames():Float return symbol.duration / symbol.frameRate;
+	
     /** Whether this movie is currently paused. */
     public var paused (get, set) :Bool;
 
     /** Emitted when this movie loops back to the beginning. */
     public var looped (get, null) :Signal0;
 
+	public var hasFrameLabels(default, null):Bool = false;
+	public var labelPassed(default, null):Signal1<String>;
+	
     public function new (symbol :MovieSymbol)
     {
         super();
-        this.symbol = symbol;
-
-        speed = new AnimatedFloat(1);
+		
+        this.symbol 	= symbol;
+		
+		readFrameLabels();
+		
+        speed 		= new AnimatedFloat(1);
+		labelPassed = new Signal1<String>();
 
         _animators = Arrays.create(symbol.layers.length);
         for (ii in 0..._animators.length) {
             var layer = symbol.layers[ii];
             _animators[ii] = new LayerAnimator(layer);
         }
-
-        _frame = 0;
+		
+        _frame = -1;
         _position = 0;
-        goto(1);
+		_lastLabelFrame = -1;
+        goto(0);
     }
+	
+	/**
+	 * 
+	 */
+	function readFrameLabels() {
+		hasFrameLabels 	= false;
+		
+		var labelsLayer	= getFrameLabelsLayer();
+		if (labelsLayer != null) {
+			
+			var labelKeyFrames 	= labelsLayer.keyframes;
+			hasFrameLabels 		= labelKeyFrames != null && labelKeyFrames.length > 0;
+			_framesToLabels		= new Map<Int, String>();
+			_labelsToFrames		= new Map<String, Int>();
+			
+			for (k in labelKeyFrames) {
+				_framesToLabels.set(k.index, k.label);
+				_labelsToFrames.set(k.label, k.index);
+			}
+		}
+	}
+	
+	
+	/**
+	 * Direct access to a MovieLayer (swf timeline layer) by name.
+	 * @param	name
+	 * @return
+	 */
+	function getSymbolLayerByName(name:String):MovieLayer {
+		var layers = Lambda.filter(symbol.layers, function(layer) { return layer.name == name; } );
+		if (layers != null && layers.length > 0) {
+			trace('Found ${layers.length} layers with the name "${name}" in MovieSprite "${this.name}"');
+			return layers.first();
+		}
+		return null;
+	}
+	
+	
+	/**
+	 * Since Flump uses named layers for animations, this exects a 'labels' layer specifically for frame-labels
+	 * A labels layer should just contain keyframes with frame-labels.
+	 * @return
+	 */
+	function getFrameLabelsLayer():MovieLayer {
+		var layer:MovieLayer = getSymbolLayerByName('labels');
+		#if debug
+		if (layer != null) {
+			if (!layer.empty) trace('MovieSprite "labels" layers should not contain any symbol instances.');
+			// not an error...
+		}
+		#end
+		return layer;
+	}
+	
+	
+	/**
+	 * Get the frame index for a frame-label keyframe on the 'labels' layer
+	 * @param	name
+	 * @return The frame index, or -1 if no label was found for the passed name
+	 */
+	public function findLabel(name:String):Float {
+		return hasFrameLabels && _labelsToFrames.exists(name) ? _labelsToFrames.get(name) : -1;
+	}
+	
 
     /**
      * Retrieves a named layer from this movie. Children can be added to the returned entity to add
@@ -97,17 +182,18 @@ class MovieSprite extends Sprite
 
     override public function onUpdate (dt :Float)
     {
-        super.onUpdate(dt);
+		super.onUpdate(dt);
 
+		if (speed._ == 0) return;
+		
         speed.update(dt);
 
         switch (_flags & (Sprite.MOVIESPRITE_PAUSED | Sprite.MOVIESPRITE_SKIP_NEXT)) {
         case 0:
             // Neither paused nor skipping set, advance time
-            _position += speed._*dt;
+            _position += speed._ * dt;
             if (_position > symbol.duration) {
                 _position = _position % symbol.duration;
-
                 if (_looped != null) {
                     _looped.emit();
                 }
@@ -117,7 +203,7 @@ class MovieSprite extends Sprite
             _flags = _flags.remove(Sprite.MOVIESPRITE_SKIP_NEXT);
         }
 
-        var newFrame = _position*symbol.frameRate;
+        var newFrame = _position * symbol.frameRate;
         goto(newFrame);
     }
 
@@ -137,27 +223,45 @@ class MovieSprite extends Sprite
         for (animator in _animators) {
             animator.composeFrame(newFrame);
         }
-
+		
         _frame = newFrame;
+    	
+		
+		if (hasFrameLabels) {
+			var iframe = Std.int(_frame);
+			if (iframe != _lastLabelFrame && _framesToLabels.exists(iframe)) {
+				_lastLabelFrame = iframe;
+				labelPassed.emit(_framesToLabels.get(iframe));
+			}
+        }
     }
+	
+	public inline function stop() {
+		speed._ = 0;
+	}
 
-    inline private function get_position () :Float
-    {
-        return _position;
-    }
+	public inline function play() {
+		speed._ = 1;
+	}
+	
 
-    private function set_position (position :Float) :Float
-    {
-        return _position = FMath.clamp(position, 0, symbol.duration);
-    }
+    inline private function get_position () :Float 
+	{
+		return _position;
+	}
+	
+    private function set_position (position :Float) :Float 
+	{
+		return _position = FMath.clamp(position, 0, symbol.duration);
+	}
 
     inline private function get_paused () :Bool
-    {
-        return _flags.contains(Sprite.MOVIESPRITE_PAUSED);
-    }
+	{
+		return _flags.contains(Sprite.MOVIESPRITE_PAUSED);
+	}
 
-    private function set_paused (paused :Bool)
-    {
+    private function set_paused (paused :Bool) 
+	{
         _flags = _flags.set(Sprite.MOVIESPRITE_PAUSED, paused);
         return paused;
     }
@@ -178,16 +282,21 @@ class MovieSprite extends Sprite
     @:allow(flambe) function rewind ()
     {
         _position = 0;
+		_lastLabelFrame = -1;
         _flags = _flags.add(Sprite.MOVIESPRITE_SKIP_NEXT);
     }
 
     private var _animators :Array<LayerAnimator>;
-
-    private var _position :Float;
+	private var _position :Float;
     private var _frame :Float;
-
-    private var _looped :Signal0 = null;
+    
+	private var _looped :Signal0 = null;
+	
+	var _framesToLabels:Map<Int,String>;
+	var _labelsToFrames:Map<String,Int>;
+	var _lastLabelFrame:Int = -1;
 }
+
 
 private class LayerAnimator
 {
