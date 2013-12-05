@@ -115,7 +115,7 @@ class MovieSprite extends Sprite
 	
 	
 	/**
-	 * Since Flump uses named layers for animations, this exects a 'labels' layer specifically for frame-labels
+	 * Since Flump uses named layers for animations, this expects a 'labels' layer specifically for frame-labels
 	 * A labels layer should just contain keyframes with frame-labels.
 	 * @return
 	 */
