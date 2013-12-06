@@ -115,7 +115,7 @@ class MovieSprite extends Sprite
 	function getSymbolLayerByName(name:String):MovieLayer {
 		var layers = Lambda.filter(symbol.layers, function(layer) { return layer.name == name; } );
 		if (layers != null && layers.length > 0) {
-			trace('Found ${layers.length} layers with the name "${name}" in MovieSprite "${this.name}"');
+			//trace('Found ${layers.length} layers with the name "${name}" in MovieSprite "${this.name}"');
 			return layers.first();
 		}
 		return null;
