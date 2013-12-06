@@ -38,7 +38,6 @@ class MovieSprite extends Sprite
     public var frame(get, set):Float;
     inline function get_frame():Float return _frame;
     inline function set_frame(value:Float):Float {
-		_lastLabelFrame = -1;
         _position = value / symbol.frameRate;
 		goto(value);
 		return _frame;
