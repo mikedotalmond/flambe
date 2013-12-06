@@ -30,14 +30,23 @@ class FlashSound extends BasicAsset<FlashSound>
     public function play (volume :Float = 1.0) :Playback
     {
         assertNotDisposed();
-
+		
+		#if (air && ios)
+		// default volume value doesn't appear to work on iOS+Air - arrives as NaN, and no sound can be heard until you set the volume manually
+		if (Math.isNaN(volume)) volume = 1.0;
+		#end
+		
         return new FlashPlayback(this, volume, 0);
     }
 
     public function loop (volume :Float = 1.0) :Playback
     {
         assertNotDisposed();
-
+		
+		#if (air && ios)
+		if (Math.isNaN(volume)) volume = 1.0;
+		#end
+		
         return new FlashPlayback(this, volume, FMath.INT_MAX);
     }
 
