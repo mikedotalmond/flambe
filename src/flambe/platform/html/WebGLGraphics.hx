@@ -115,8 +115,11 @@ class WebGLGraphics
         var u2 = texture.maxU*(sourceX + sourceW) / w;
         var v2 = texture.maxV*(sourceY + sourceH) / h;
         var alpha = state.alpha;
-
-        var offset = _batcher.prepareDrawImage(_renderTarget, state.blendMode, state.scissor, texture);
+		var tintR = state.tintR;
+		var tintG = state.tintG;
+		var tintB = state.tintB;
+		
+        var offset = _batcher.prepareDrawImageWithTint(_renderTarget, state.blendMode, state.scissor, texture);
         var data = _batcher.data;
 
         data[  offset] = pos[0];
@@ -124,24 +127,36 @@ class WebGLGraphics
         data[++offset] = u1;
         data[++offset] = v1;
         data[++offset] = alpha;
+        data[++offset] = tintR;
+        data[++offset] = tintG;
+      	data[++offset] = tintB;
 
         data[++offset] = pos[2];
         data[++offset] = pos[3];
         data[++offset] = u2;
         data[++offset] = v1;
         data[++offset] = alpha;
+        data[++offset] = tintR;
+        data[++offset] = tintG;
+      	data[++offset] = tintB;
 
         data[++offset] = pos[4];
         data[++offset] = pos[5];
         data[++offset] = u2;
         data[++offset] = v2;
         data[++offset] = alpha;
+        data[++offset] = tintR;
+        data[++offset] = tintG;
+      	data[++offset] = tintB;
 
         data[++offset] = pos[6];
         data[++offset] = pos[7];
         data[++offset] = u1;
         data[++offset] = v2;
         data[++offset] = alpha;
+        data[++offset] = tintR;
+        data[++offset] = tintG;
+      	data[++offset] = tintB;
     }
 
     public function drawPattern (texture :Texture, x :Float, y :Float, width :Float, height :Float)
@@ -239,6 +254,13 @@ class WebGLGraphics
     {
         getTopState().blendMode = blendMode;
     }
+	
+	public function setTint(r:Float=1,g:Float=1,b:Float=1)
+    {
+        getTopState().tintR = r;
+        getTopState().tintG = g;
+        getTopState().tintB = b;
+    }
 
     public function applyScissor (x :Float, y :Float, width :Float, height :Float)
     {
@@ -335,6 +357,9 @@ private class DrawingState
 {
     public var matrix :Matrix;
     public var alpha :Float;
+	public var tintR :Float;
+	public var tintG :Float;
+	public var tintB :Float;
     public var blendMode :BlendMode;
     public var scissor :Rectangle = null;
 
@@ -345,6 +370,7 @@ private class DrawingState
     {
         matrix = new Matrix();
         alpha = 1;
+		tintR = tintG = tintB = 1.0;
         blendMode = Normal;
     }
 

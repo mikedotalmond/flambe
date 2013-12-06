@@ -38,9 +38,10 @@ class WebGLBatcher
         gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, _quadIndexBuffer);
 
         _drawImageShader = new DrawImageGL(gl);
+        _drawImageWithTintShader = new DrawImageWithTintGL(gl);
         _drawPatternShader = new DrawPatternGL(gl);
         _fillRectShader = new FillRectGL(gl);
-
+		
         resize(16);
     }
 
@@ -115,6 +116,16 @@ class WebGLBatcher
         }
         return prepareQuad(5, renderTarget, blendMode, scissor, _drawImageShader);
     }
+	
+	public function prepareDrawImageWithTint (renderTarget :WebGLTexture,
+        blendMode :BlendMode, scissor :Rectangle, texture :WebGLTexture) :Int
+    {
+        if (texture != _lastTexture) {
+            flush();
+            _lastTexture = texture;
+        }
+        return prepareQuad(8, renderTarget, blendMode, scissor, _drawImageWithTintShader);
+    }
 
     public function prepareDrawPattern (renderTarget :WebGLTexture,
         blendMode :BlendMode, scissor :Rectangle, texture :WebGLTexture) :Int
@@ -158,12 +169,12 @@ class WebGLBatcher
         }
 
         if (_quads >= _maxQuads) {
-            resize(2*_maxQuads);
+            resize(_maxQuads<<1);
         }
         ++_quads;
 
         var offset = _dataOffset;
-        _dataOffset += 4*elementsPerVertex;
+        _dataOffset += (elementsPerVertex << 2);
         return offset;
     }
 
@@ -232,7 +243,7 @@ class WebGLBatcher
         _maxQuads = maxQuads;
 
         // Set the new vertex buffer size
-        data = new Float32Array(maxQuads*4*MAX_ELEMENTS_PER_VERTEX);
+        data = new Float32Array((maxQuads<<2)*MAX_ELEMENTS_PER_VERTEX);
         _gl.bufferData(GL.ARRAY_BUFFER,
             data.length*Float32Array.BYTES_PER_ELEMENT, GL.STREAM_DRAW);
 
@@ -262,7 +273,7 @@ class WebGLBatcher
         _lastRenderTarget = texture;
     }
 
-    private static inline var MAX_ELEMENTS_PER_VERTEX = 6;
+    private static inline var MAX_ELEMENTS_PER_VERTEX = 8;
     private static inline var MAX_BATCH_QUADS = 1024;
 
     private var _gl :RenderingContext;
@@ -285,6 +296,7 @@ class WebGLBatcher
     private var _quadIndexBuffer :Buffer;
 
     private var _drawImageShader :DrawImageGL;
+    private var _drawImageWithTintShader :DrawImageWithTintGL;
     private var _drawPatternShader :DrawPatternGL;
     private var _fillRectShader :FillRectGL;
 

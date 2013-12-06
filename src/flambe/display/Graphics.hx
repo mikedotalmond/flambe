@@ -36,6 +36,11 @@ interface Graphics
     /** Sets the blend mode to use for drawing. */
     function setBlendMode (blendMode :BlendMode) :Void;
 
+	/**
+	 * Set multipliers for RGB components
+	 */
+	function setTint(r:Float = 1, g:Float = 1, b:Float = 1):Void;
+	
     /**
      * Sets the scissor rectangle to the intersection of the current scissor rectangle and the given
      * rectangle, in local coordinates.

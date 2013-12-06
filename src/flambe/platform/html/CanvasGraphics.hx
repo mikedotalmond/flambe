@@ -168,6 +168,10 @@ class CanvasGraphics
     {
         // Nothing at all
     }
+	
+	public function setTint(r:Float = 1, g:Float = 1, b:Float = 1):Void {
+		// not (yet) implemented
+	}
 
     private var _canvasCtx :CanvasRenderingContext2D;
     private var _firstDraw :Bool = false;
