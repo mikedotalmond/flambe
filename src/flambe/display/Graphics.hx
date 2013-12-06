@@ -39,7 +39,7 @@ interface Graphics
 	/**
 	 * Set multipliers for RGB components
 	 */
-	function setTint(r:Float = 1, g:Float = 1, b:Float = 1):Void;
+	function setTint(r:Float, g:Float, b:Float):Void;
 	
     /**
      * Sets the scissor rectangle to the intersection of the current scissor rectangle and the given

@@ -169,7 +169,7 @@ class CanvasGraphics
         // Nothing at all
     }
 	
-	public function setTint(r:Float = 1, g:Float = 1, b:Float = 1):Void {
+	public function setTint(r:Float, g:Float, b:Float):Void {
 		// not (yet) implemented
 	}
 

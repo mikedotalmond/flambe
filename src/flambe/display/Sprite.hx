@@ -116,16 +116,29 @@ class Sprite extends Component
         var dirtyMatrix = function (_,_) {
             _flags = _flags.add(LOCAL_MATRIX_DIRTY | VIEW_MATRIX_DIRTY);
         };
+		
         x = new AnimatedFloat(0, dirtyMatrix);
         y = new AnimatedFloat(0, dirtyMatrix);
         rotation = new AnimatedFloat(0, dirtyMatrix);
         scaleX = new AnimatedFloat(1, dirtyMatrix);
         scaleY = new AnimatedFloat(1, dirtyMatrix);
         anchorX = new AnimatedFloat(0, dirtyMatrix);
-        anchorY = new AnimatedFloat(0, dirtyMatrix);
-
+		anchorY = new AnimatedFloat(0, dirtyMatrix);
+		
         alpha = new AnimatedFloat(1);
+        tintR = new AnimatedFloat(1);
+        tintG = new AnimatedFloat(1);
+        tintB = new AnimatedFloat(1);
     }
+	
+	public var tintR(default, null):AnimatedFloat;
+	public var tintG(default, null):AnimatedFloat;
+	public var tintB(default, null):AnimatedFloat;
+	public function setTint(r:Float, g:Float, b:Float) {
+		tintR._ = r;
+		tintG._ = g;
+		tintB._ = b;
+	}
 
     /**
      * Search for a sprite in the entity hierarchy lying under the given point, in local
@@ -193,13 +206,21 @@ class Sprite extends Component
                 return; // Prune traversal, this sprite and all children are invisible
             }
 
+			var tintR = sprite.tintR._;
+			var tintG = sprite.tintG._;
+			var tintB = sprite.tintB._;
+			
             g.save();
-            if (alpha < 1) {
+			
+			g.setTint(sprite.tintR._, sprite.tintG._, sprite.tintB._);
+			
+			if (alpha < 1) {
                 g.multiplyAlpha(alpha);
             }
             if (sprite.blendMode != null) {
                 g.setBlendMode(sprite.blendMode);
             }
+			
             var matrix = sprite.getLocalMatrix();
 
             var m02 = matrix.m02;
@@ -209,13 +230,14 @@ class Sprite extends Component
                 m02 = Math.round(m02);
                 m12 = Math.round(m12);
             }
+			
             g.transform(matrix.m00, matrix.m10, matrix.m01, matrix.m11, m02, m12);
 
             var scissor = sprite.scissor;
             if (scissor != null) {
                 g.applyScissor(scissor.x, scissor.y, scissor.width, scissor.height);
             }
-
+			
             sprite.draw(g);
         }
 
@@ -396,6 +418,9 @@ class Sprite extends Component
         rotation.update(dt);
         scaleX.update(dt);
         scaleY.update(dt);
+		tintR.update(dt);
+		tintG.update(dt);
+		tintB.update(dt);
         alpha.update(dt);
         anchorX.update(dt);
         anchorY.update(dt);

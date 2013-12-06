@@ -42,12 +42,18 @@ import flambe.util.Assert;
         }
 
         state.matrix.copyFrom(current.matrix);
+		
+        state.tintR = current.tintR;
+        state.tintG = current.tintG;
+        state.tintB = current.tintB;
+		
         state.alpha = current.alpha;
         state.blendMode = current.blendMode;
         state.scissorEnabled = current.scissorEnabled;
         if (state.scissorEnabled) {
             state.scissor.copyFrom(current.scissor);
         }
+		
         _stateList = state;
     }
 
@@ -105,6 +111,7 @@ import flambe.util.Assert;
         if (state.emptyScissor()) {
             return;
         }
+		
         var texture = Lib.as(texture, Stage3DTexture);
         texture.assertNotDisposed();
 
@@ -265,7 +272,7 @@ import flambe.util.Assert;
         getTopState().blendMode = blendMode;
     }
 	
-	public function setTint (r:Float=1,g:Float=1,b:Float=1)
+	public function setTint (r:Float,g:Float,b:Float)
     {
         getTopState().tintR = r;
         getTopState().tintG = g;

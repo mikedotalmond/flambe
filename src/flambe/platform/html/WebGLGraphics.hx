@@ -43,10 +43,16 @@ class WebGLGraphics
         }
 
         current.matrix.clone(state.matrix);
+		
         state.alpha = current.alpha;
+        state.tintR = current.tintR;
+        state.tintG = current.tintG;
+        state.tintB = current.tintB;
+		
         state.blendMode = current.blendMode;
         state.scissor = (current.scissor != null) ? current.scissor.clone(state.scissor) : null;
-        _stateList = state;
+
+		_stateList = state;
     }
 
     public function translate (x :Float, y :Float)
@@ -114,14 +120,15 @@ class WebGLGraphics
         var v1 = texture.maxV*sourceY / h;
         var u2 = texture.maxU*(sourceX + sourceW) / w;
         var v2 = texture.maxV*(sourceY + sourceH) / h;
-        var alpha = state.alpha;
+
+		var alpha = state.alpha;
 		var tintR = state.tintR;
 		var tintG = state.tintG;
 		var tintB = state.tintB;
 		
         var offset = _batcher.prepareDrawImageWithTint(_renderTarget, state.blendMode, state.scissor, texture);
         var data = _batcher.data;
-
+		
         data[  offset] = pos[0];
         data[++offset] = pos[1];
         data[++offset] = u1;
@@ -255,7 +262,7 @@ class WebGLGraphics
         getTopState().blendMode = blendMode;
     }
 	
-	public function setTint(r:Float=1,g:Float=1,b:Float=1)
+	public function setTint(r:Float,g:Float,b:Float)
     {
         getTopState().tintR = r;
         getTopState().tintG = g;
@@ -370,7 +377,9 @@ private class DrawingState
     {
         matrix = new Matrix();
         alpha = 1;
-		tintR = tintG = tintB = 1.0;
+		tintR = 1.0;
+		tintG = 1.0;
+		tintB = 1.0;
         blendMode = Normal;
     }
 

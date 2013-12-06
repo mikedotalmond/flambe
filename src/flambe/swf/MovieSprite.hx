@@ -6,6 +6,7 @@ package flambe.swf;
 
 import flambe.animation.AnimatedFloat;
 import flambe.display.Sprite;
+import flambe.Entity;
 import flambe.math.FMath;
 
 import flambe.swf.MovieSymbol;
@@ -75,7 +76,7 @@ class MovieSprite extends Sprite
         _animators = Arrays.create(symbol.layers.length);
         for (ii in 0..._animators.length) {
             var layer = symbol.layers[ii];
-            _animators[ii] = new LayerAnimator(layer);
+            _animators[ii] = new LayerAnimator(layer, this);
         }
 		
         _frame = -1;
@@ -214,7 +215,7 @@ class MovieSprite extends Sprite
         goto(newFrame);
     }
 
-    private function goto (newFrame :Float)
+    function goto (newFrame :Float)
     {
         if (_frame == newFrame) {
             return; // No change
@@ -268,28 +269,28 @@ class MovieSprite extends Sprite
 	}
 	
 
-    inline private function get_position () :Float
+    inline function get_position () :Float
 	{
 		return _position;
 	}
 	
-    private function set_position (position :Float) :Float
+    function set_position (position :Float) :Float
 	{
 		return _position = FMath.clamp(position, 0, symbol.duration);
 	}
 
-    inline private function get_paused () :Bool
+    inline function get_paused () :Bool
 	{
 		return _flags.contains(Sprite.MOVIESPRITE_PAUSED);
 	}
 
-    private function set_paused (paused :Bool)
+    function set_paused (paused :Bool)
 	{
         _flags = _flags.set(Sprite.MOVIESPRITE_PAUSED, paused);
         return paused;
     }
 
-    private function get_looped () :Signal0
+    function get_looped () :Signal0
     {
         if (_looped == null) {
             _looped = new Signal0();
@@ -309,11 +310,11 @@ class MovieSprite extends Sprite
         _flags = _flags.add(Sprite.MOVIESPRITE_SKIP_NEXT);
     }
 
-    private var _animators :Array<LayerAnimator>;
-	private var _position :Float;
-    private var _frame :Float;
+    var _animators :Array<LayerAnimator>;
+	var _position :Float;
+    var _frame :Float;
 
-	private var _looped :Signal0 = null;
+	var _looped :Signal0 = null;
 	
 	var _framesToLabels:Map<Int,String>;
 	var _labelsToFrames:Map<String,Int>;
@@ -321,7 +322,7 @@ class MovieSprite extends Sprite
 }
 
 
-private class LayerAnimator
+class LayerAnimator
 {
     public var content (default, null) :Entity;
 
@@ -329,10 +330,13 @@ private class LayerAnimator
     public var keyframeIdx :Int = 0;
 
     public var layer :MovieLayer;
+	
+	var parent:MovieSprite;
 
-    public function new (layer :MovieLayer)
+    public function new (layer :MovieLayer, parent:MovieSprite)
     {
         this.layer = layer;
+        this.parent = parent;
 
         content = new Entity();
         if (layer.empty) {
@@ -410,7 +414,10 @@ private class LayerAnimator
         var skewX = kf.skewX;
         var skewY = kf.skewY;
         var alpha = kf.alpha;
-
+		
+		//
+		sprite.setTint(parent.tintR._, parent.tintG._, parent.tintB._);
+		
         if (kf.tweened && keyframeIdx < finalFrame) {
             var interp = (frame-kf.index) / kf.duration;
             var ease = kf.ease;
@@ -446,10 +453,10 @@ private class LayerAnimator
 
         // Append the pivot
         matrix.translate(-kf.pivotX, -kf.pivotY);
-
+		
         sprite.alpha._ = alpha;
     }
 
     // The sprite to show at each keyframe index, or null if this layer has no symbol instances
-    private var _sprites :Array<Sprite>;
+    var _sprites :Array<Sprite>;
 }
