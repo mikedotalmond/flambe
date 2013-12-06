@@ -17,7 +17,7 @@ import flambe.display.Texture;
 import flambe.math.FMath;
 import flambe.util.Assert;
 
-class Stage3DGraphics
+@:final class Stage3DGraphics
     implements InternalGraphics
 {
     public function new (batcher :Stage3DBatcher, renderTarget :Stage3DTexture)
@@ -97,7 +97,8 @@ class Stage3DGraphics
         drawSubImage(texture, destX, destY, 0, 0, texture.width, texture.height);
     }
 
-    public function drawSubImage (texture :Texture, destX :Float, destY :Float,
+	
+	public function drawSubImage (texture :Texture, destX :Float, destY :Float,
         sourceX :Float, sourceY :Float, sourceW :Float, sourceH :Float)
     {
         var state = getTopState();
@@ -114,36 +115,54 @@ class Stage3DGraphics
         var v1 = texture.maxV*sourceY / h;
         var u2 = texture.maxU*(sourceX + sourceW) / w;
         var v2 = texture.maxV*(sourceY + sourceH) / h;
-        var alpha = state.alpha;
-
-        var offset = _batcher.prepareDrawImage(_renderTarget, state.blendMode, state.getScissor(), texture);
+		
+		var alpha = state.alpha;
+		var tintR = state.tintR;
+		var tintG = state.tintG;
+		var tintB = state.tintB;
+		
+        var offset = _batcher.prepareDrawTintedImage(_renderTarget, state.blendMode, state.getScissor(), texture);
         var data = _batcher.data;
-
+		
         data[  offset] = pos[0];
         data[++offset] = pos[1];
         data[++offset] = u1;
         data[++offset] = v1;
         data[++offset] = alpha;
+        data[++offset] = tintR;
+        data[++offset] = tintG;
+      	data[++offset] = tintB;
 
         data[++offset] = pos[3];
         data[++offset] = pos[4];
         data[++offset] = u2;
         data[++offset] = v1;
         data[++offset] = alpha;
+        data[++offset] = tintR;
+        data[++offset] = tintG;
+        data[++offset] = tintB;
 
         data[++offset] = pos[6];
         data[++offset] = pos[7];
         data[++offset] = u2;
         data[++offset] = v2;
         data[++offset] = alpha;
+        data[++offset] = tintR;
+        data[++offset] = tintG;
+        data[++offset] = tintB;
 
         data[++offset] = pos[9];
         data[++offset] = pos[10];
         data[++offset] = u1;
         data[++offset] = v2;
         data[++offset] = alpha;
+        data[++offset] = tintR;
+        data[++offset] = tintG;
+        data[++offset] = tintB;
     }
-
+	
+	
+	
     public function drawPattern (texture :Texture, x :Float, y :Float, width :Float, height :Float)
     {
         var state = getTopState();
@@ -245,6 +264,14 @@ class Stage3DGraphics
     {
         getTopState().blendMode = blendMode;
     }
+	
+	public function setTint (r:Float=1,g:Float=1,b:Float=1)
+    {
+        getTopState().tintR = r;
+        getTopState().tintG = g;
+        getTopState().tintB = b;
+    }
+
 
     public function applyScissor (x :Float, y :Float, width :Float, height :Float)
     {
@@ -353,11 +380,15 @@ class Stage3DGraphics
     private var _stateList :DrawingState;
 }
 
-private class DrawingState
+@:final class DrawingState
 {
     public var matrix :Matrix3D;
     public var alpha :Float;
     public var blendMode :BlendMode;
+	
+	public var tintR:Float;
+	public var tintG:Float;
+	public var tintB:Float;
 
     public var scissor :Rectangle;
     public var scissorEnabled :Bool;
@@ -369,6 +400,7 @@ private class DrawingState
     {
         matrix = new Matrix3D();
         alpha = 1;
+		tintR = tintG = tintB = 1;
         blendMode = Normal;
         scissor = new Rectangle();
     }
@@ -394,7 +426,7 @@ private class DrawingState
         scissor.setTo(x, y, width, height);
         scissorEnabled = true;
     }
-
+	
     /**
      * Whether the scissor region is empty. Calling Context3D.setScissorRectangle with an empty
      * rectangle actually disables scissor testing, so this needs to be queried before every draw

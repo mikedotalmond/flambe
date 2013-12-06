@@ -22,7 +22,7 @@ import flambe.platform.shader.DrawPattern;
 import flambe.platform.shader.FillRect;
 import flambe.util.Assert;
 
-class Stage3DBatcher
+@:final class Stage3DBatcher
 {
     public var data (default, null) :Vector<Float>;
 
@@ -30,6 +30,7 @@ class Stage3DBatcher
     {
         _context3D = context3D;
         _drawImageShader = new DrawImage();
+        _drawImageWithTintShader = new DrawImageWithTint();
         _drawPatternShader = new DrawPattern();
         _fillRectShader = new FillRect();
 
@@ -48,9 +49,9 @@ class Stage3DBatcher
         // Switch to the back buffer
         if (_currentRenderTarget != null) {
             flush();
-#if flambe_debug_renderer
+			#if flambe_debug_renderer
             trace("Resetting render target to back buffer");
-#end
+			#end
             _context3D.setRenderToBackBuffer();
             _currentRenderTarget = _lastRenderTarget = null;
         }
@@ -187,6 +188,19 @@ class Stage3DBatcher
         }
         return prepareQuad(5, renderTarget, blendMode, scissor, _drawImageShader);
     }
+	
+	
+	/** Adds a quad to the batch, using the DrawImageWithTint shader. */
+    public function prepareDrawTintedImage (renderTarget :Stage3DTexture,
+        blendMode :BlendMode, scissor :Rectangle, texture :Stage3DTexture) :Int
+    {
+        if (texture != _lastTexture) {
+            flush();
+            _lastTexture = texture;
+        }
+        return prepareQuad(8, renderTarget, blendMode, scissor, _drawImageWithTintShader);
+    }
+	
 
     /** Adds a quad to the batch, using the DrawPattern shader. */
     public function prepareDrawPattern (renderTarget :Stage3DTexture,
@@ -237,12 +251,12 @@ class Stage3DBatcher
         }
 
         if (_quads >= _maxQuads) {
-            resize(2*_maxQuads);
+            resize(_maxQuads<<1);
         }
         ++_quads;
 
         var offset = _dataOffset;
-        _dataOffset += 4*elementsPerVertex;
+        _dataOffset += (elementsPerVertex << 2);
         return offset;
     }
 
@@ -264,9 +278,9 @@ class Stage3DBatcher
         }
 
         if (_lastBlendMode != _currentBlendMode) {
-#if flambe_debug_renderer
+			#if flambe_debug_renderer
             trace("Changing blend mode: " + _lastBlendMode);
-#end
+			#end
             switch (_lastBlendMode) {
                 case Normal: _context3D.setBlendFactors(ONE, ONE_MINUS_SOURCE_ALPHA);
                 case Add: _context3D.setBlendFactors(ONE, ONE);
@@ -287,6 +301,11 @@ class Stage3DBatcher
             _drawImageShader.texture = _lastTexture.nativeTexture;
             _drawImageShader.rebuildVars();
             vertexBuffer = _vertexBuffer5;
+			
+		} else if (_lastShader == _drawImageWithTintShader) {
+			_drawImageWithTintShader.texture = _lastTexture.nativeTexture;
+            _drawImageWithTintShader.rebuildVars();
+            vertexBuffer = _vertexBuffer8;
 
         } else if (_lastShader == _drawPatternShader) {
             var maxUV = _scratchVector3D;
@@ -304,14 +323,14 @@ class Stage3DBatcher
         }
 
         // vertexBuffer.uploadFromVector(data, 0, _quads*4);
-        vertexBuffer.uploadFromVector(data, 0, _maxQuads*4);
+        vertexBuffer.uploadFromVector(data, 0, _maxQuads<<2);
         _lastShader.bind(_context3D, vertexBuffer);
-        _context3D.drawTriangles(_quadIndexBuffer, 0, _quads*2);
+        _context3D.drawTriangles(_quadIndexBuffer, 0, _quads<<1);
         _lastShader.unbind(_context3D);
 
-#if flambe_debug_renderer
+		#if flambe_debug_renderer
         trace("Flushed " + _quads + " / " + _maxQuads + " quads");
-#end
+		#end
         _quads = 0;
         _dataOffset = 0;
     }
@@ -324,16 +343,18 @@ class Stage3DBatcher
         }
 
         _maxQuads = maxQuads;
-        data = new Vector<Float>(maxQuads*4*MAX_ELEMENTS_PER_VERTEX, true);
+        data = new Vector<Float>((maxQuads << 2) * MAX_ELEMENTS_PER_VERTEX, true);
 
         var indices = new Vector<UInt>(6*maxQuads, true);
         for (ii in 0...maxQuads) {
-            indices[ii*6 + 0] = ii*4 + 0;
-            indices[ii*6 + 1] = ii*4 + 1;
-            indices[ii*6 + 2] = ii*4 + 2;
-            indices[ii*6 + 3] = ii*4 + 2;
-            indices[ii*6 + 4] = ii*4 + 3;
-            indices[ii*6 + 5] = ii*4 + 0;
+			var i4 = ii << 2;
+			var i6 = ii * 6;
+            indices[i6 + 0] = i4 + 0;
+            indices[i6 + 1] = i4 + 1;
+            indices[i6 + 2] = i4 + 2;
+            indices[i6 + 3] = i4 + 2;
+            indices[i6 + 4] = i4 + 3;
+            indices[i6 + 5] = i4 + 0;
         }
         if (_quadIndexBuffer != null) {
             _quadIndexBuffer.dispose();
@@ -341,9 +362,10 @@ class Stage3DBatcher
         _quadIndexBuffer = _context3D.createIndexBuffer(indices.length);
         _quadIndexBuffer.uploadFromVector(indices, 0, indices.length);
 
-        var verts = 4*maxQuads;
+        var verts = maxQuads << 2;
         _vertexBuffer5 = createVertexBuffer(verts, 5, _vertexBuffer5);
         _vertexBuffer6 = createVertexBuffer(verts, 6, _vertexBuffer6);
+        _vertexBuffer8 = createVertexBuffer(verts, 8, _vertexBuffer8);
     }
 
     private function createVertexBuffer (verts :Int, elementsPerVertex :Int,
@@ -355,7 +377,7 @@ class Stage3DBatcher
         return _context3D.createVertexBuffer(verts, elementsPerVertex);
     }
 
-    private static inline var MAX_ELEMENTS_PER_VERTEX = 6;
+    private static inline var MAX_ELEMENTS_PER_VERTEX = 8;
     private static inline var MAX_BATCH_QUADS = 1024;
 
     private static var _scratchVector3D = new Vector3D();
@@ -378,12 +400,14 @@ class Stage3DBatcher
     private var _pendingSetScissor :Bool;
 
     private var _drawImageShader :DrawImage;
+    private var _drawImageWithTintShader :DrawImageWithTint;
     private var _drawPatternShader :DrawPattern;
     private var _fillRectShader :FillRect;
 
     private var _quadIndexBuffer :IndexBuffer3D;
     private var _vertexBuffer5 :VertexBuffer3D;
     private var _vertexBuffer6 :VertexBuffer3D;
+    private var _vertexBuffer8 :VertexBuffer3D;
 
     private var _quads :Int;
     private var _maxQuads :Int;
