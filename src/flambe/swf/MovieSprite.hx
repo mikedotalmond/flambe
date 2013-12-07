@@ -245,11 +245,11 @@ class MovieSprite extends Sprite
     }
 	
 	public function stop(stopChildren:Bool=true) {
-		speed._ = 0; _lastLabelFrame = -1;
+		speed._ = 0;
 		if(stopChildren) {
 			for (ani in _animators) {
 				var spr = ani.content.get(MovieSprite);
-				if (Std.is(spr, MovieSprite)) {
+				if (Type.getClass(spr) == MovieSprite){
 					spr.stop();
 				}
 			}
@@ -257,11 +257,11 @@ class MovieSprite extends Sprite
 	}
 
 	public function play(playChildren:Bool=true) {
-		speed._ = 1; _lastLabelFrame = -1;
+		speed._ = 1;
 		if(playChildren) {
 			for (ani in _animators) {
 				var spr = ani.content.get(MovieSprite);
-				if (Std.is(spr, MovieSprite)) {
+				if (Type.getClass(spr) == MovieSprite){
 					spr.play();
 				}
 			}
