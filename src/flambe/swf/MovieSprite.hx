@@ -268,6 +268,16 @@ class MovieSprite extends Sprite
 		}
 	}
 	
+	
+	override public function setTint(r:Float, g:Float, b:Float) {
+		//super.setTint(r, g, b);
+		for (ani in _animators) {
+			var spr = ani.content.get(Sprite);
+			if (spr != null) spr.setTint(r, g, b);
+		}
+	}
+	
+	
 
     inline function get_position () :Float
 	{
@@ -326,13 +336,13 @@ class LayerAnimator
 {
     public var content (default, null) :Entity;
 
-    public var needsKeyframeUpdate :Bool = false;
+    public var needsKeyframeUpdate:Bool = false;
     public var keyframeIdx :Int = 0;
-
-    public var layer :MovieLayer;
 	
-	var parent:MovieSprite;
-
+    public var layer		:MovieLayer;
+	
+	var parent				:MovieSprite;
+	
     public function new (layer :MovieLayer, parent:MovieSprite)
     {
         this.layer = layer;
@@ -341,7 +351,6 @@ class LayerAnimator
         content = new Entity();
         if (layer.empty) {
             _sprites = null;
-
         } else {
             // Populate _sprites with the Sprite at each keyframe, reusing consecutive symbols
             _sprites = Arrays.create(layer.keyframes.length);
@@ -415,9 +424,6 @@ class LayerAnimator
         var skewY = kf.skewY;
         var alpha = kf.alpha;
 		
-		//
-		sprite.setTint(parent.tintR._, parent.tintG._, parent.tintB._);
-		
         if (kf.tweened && keyframeIdx < finalFrame) {
             var interp = (frame-kf.index) / kf.duration;
             var ease = kf.ease;
@@ -449,12 +455,12 @@ class LayerAnimator
         var matrix = sprite.getLocalMatrix();
         var sinX = Math.sin(skewX), cosX = Math.cos(skewX);
         var sinY = Math.sin(skewY), cosY = Math.cos(skewY);
-        matrix.set(cosY*scaleX, sinY*scaleX, -sinX*scaleY, cosX*scaleY, x, y);
+        matrix.set(cosY * scaleX, sinY * scaleX, -sinX * scaleY, cosX * scaleY, x, y);
 
         // Append the pivot
         matrix.translate(-kf.pivotX, -kf.pivotY);
 		
-        sprite.alpha._ = alpha;
+		sprite.alpha._ = alpha;
     }
 
     // The sprite to show at each keyframe index, or null if this layer has no symbol instances
