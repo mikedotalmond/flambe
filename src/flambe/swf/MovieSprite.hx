@@ -35,48 +35,43 @@ class MovieSprite extends Sprite
      * that.
      */
     public var speed (default, null) :AnimatedFloat;
-
+	
+	/** get/set the current frame (playhead position) **/
     public var frame(get, set):Float;
-    inline function get_frame():Float return _frame;
-    inline function set_frame(value:Float):Float {
-        _position = value / symbol.frameRate;
-		goto(value);
-		return _frame;
-    }
 
+	/* The total number of frames in this MovieSprite */
 	public var totalFrames(get_totalFrames, never):Int;
-	inline function get_totalFrames():Int return Math.ceil(symbol.duration / symbol.frameRate);
 	
     /** Whether this movie is currently paused. */
     public var paused (get, set) :Bool;
 
     /** Emitted when this movie loops back to the beginning. */
     public var looped (get, null) :Signal0;
-
-	public var hasFrameLabels(default, null):Bool = false;
+	
+    /** Emitted when the playhead passes a label keyframe on the 'labels' layer. */
 	public var labelPassed(default, null):Signal1<String>;
 	
-	var _frameLabels:Array<String>;
+	/** true if a 'labels' layer has been detected and parsed **/
+	public var hasFrameLabels(default, null):Bool = false;
+	
 	public var frameLabels(get, never):Array<String>;
-	function get_frameLabels() {
-		if (_frameLabels == null) _frameLabels = Lambda.array(_framesToLabels);
-		return _frameLabels;
-	}
+	
 	
     public function new (symbol :MovieSymbol)
     {
         super();
-        this.symbol 	= symbol;
+		
+        this.symbol = symbol;
 		
 		readFrameLabels();
 		
         speed 		= new AnimatedFloat(1);
 		labelPassed = new Signal1<String>();
-
+		
         _animators = Arrays.create(symbol.layers.length);
         for (ii in 0..._animators.length) {
             var layer = symbol.layers[ii];
-            _animators[ii] = new LayerAnimator(layer, this);
+            _animators[ii] = new LayerAnimator(layer);
         }
 		
         _frame = -1;
@@ -84,70 +79,6 @@ class MovieSprite extends Sprite
 		_lastLabelFrame = -1;
         goto(0);
     }
-	
-	/**
-	 *
-	 */
-	function readFrameLabels() {
-		hasFrameLabels 	= false;
-		
-		var labelsLayer	= getFrameLabelsLayer();
-		if (labelsLayer != null) {
-			
-			var labelKeyFrames 	= labelsLayer.keyframes;
-			hasFrameLabels 		= labelKeyFrames != null && labelKeyFrames.length > 0;
-			_framesToLabels		= new Map<Int, String>();
-			_labelsToFrames		= new Map<String, Int>();
-			
-			for (k in labelKeyFrames) {
-				_framesToLabels.set(k.index, k.label);
-				_labelsToFrames.set(k.label, k.index);
-			}
-		}
-	}
-	
-	
-	/**
-	 * Direct access to a MovieLayer (swf timeline layer) by name.
-	 * @param	name
-	 * @return
-	 */
-	function getSymbolLayerByName(name:String):MovieLayer {
-		var layers = Lambda.filter(symbol.layers, function(layer) { return layer.name == name; } );
-		if (layers != null && layers.length > 0) {
-			//trace('Found ${layers.length} layers with the name "${name}" in MovieSprite "${this.name}"');
-			return layers.first();
-		}
-		return null;
-	}
-	
-	
-	/**
-	 * Since Flump uses named layers for animations, this expects a 'labels' layer specifically for frame-labels
-	 * A labels layer should just contain keyframes with frame-labels.
-	 * @return
-	 */
-	function getFrameLabelsLayer():MovieLayer {
-		var layer:MovieLayer = getSymbolLayerByName('labels');
-		#if debug
-		if (layer != null) {
-			if (!layer.empty) trace('MovieSprite "labels" layers should not contain any symbol instances.');
-			// not an error...
-		}
-		#end
-		return layer;
-	}
-	
-	
-	/**
-	 * Get the frame index for a frame-label keyframe on the 'labels' layer
-	 * @param	name
-	 * @return The frame index, or -1 if no label was found for the passed name
-	 */
-	public function findLabel(name:String):Float {
-		return hasFrameLabels && _labelsToFrames.exists(name) ? _labelsToFrames.get(name) : -1;
-	}
-	
 
     /**
      * Retrieves a named layer from this movie. Children can be added to the returned entity to add
@@ -167,7 +98,47 @@ class MovieSprite extends Sprite
         }
         return null;
     }
-
+		
+	
+	/**
+	 * Get the frame index for a frame-label keyframe on the 'labels' layer.
+	 * @param	name
+	 * @return The frame index, or -1 if no label was found for the passed name
+	 */
+	public function findLabel(name:String):Float {
+		return hasFrameLabels && _labelsToFrames.exists(name) ? _labelsToFrames.get(name) : -1;
+	}
+	
+	/**
+	 *
+	 * @param	stopChildLayers
+	 */
+	public function stop(stopChildLayers:Bool=false) {
+		speed._ = 0;
+		if(stopChildLayers) {
+			for (ani in _animators) {
+				var spr = ani.content.get(MovieSprite);
+				if (Type.getClass(spr) == MovieSprite) spr.stop();
+			}
+		}
+	}
+	
+	/**
+	 *
+	 * @param	playChildLayers
+	 */
+	public function play(playChildLayers:Bool=false) {
+		speed._ = 1;
+		if(playChildLayers) {
+			for (ani in _animators) {
+				var spr = ani.content.get(MovieSprite);
+				if (Type.getClass(spr) == MovieSprite) spr.play();
+			}
+		}
+	}
+	
+	
+	
     override public function onAdded ()
     {
         super.onAdded();
@@ -176,7 +147,7 @@ class MovieSprite extends Sprite
             owner.addChild(animator.content);
         }
     }
-
+	
     override public function onRemoved ()
     {
         super.onRemoved();
@@ -214,7 +185,18 @@ class MovieSprite extends Sprite
         var newFrame = _position * symbol.frameRate;
         goto(newFrame);
     }
+	
+	
+	// tint the children!
+	override public function setTint(r:Float, g:Float, b:Float) {
+		//super.setTint(r, g, b);
+		for (ani in _animators) {
+			var spr = ani.content.get(Sprite);
+			if (spr != null) spr.setTint(r, g, b);
+		}
+	}
 
+	
     function goto (newFrame :Float)
     {
         if (_frame == newFrame) {
@@ -233,7 +215,6 @@ class MovieSprite extends Sprite
         }
 		
         _frame = newFrame;
-
 		
 		if (hasFrameLabels) {
 			var iframe = Std.int(_frame);
@@ -244,41 +225,48 @@ class MovieSprite extends Sprite
         }
     }
 	
-	public function stop(stopChildren:Bool=true) {
-		speed._ = 0;
-		if(stopChildren) {
-			for (ani in _animators) {
-				var spr = ani.content.get(MovieSprite);
-				if (Type.getClass(spr) == MovieSprite){
-					spr.stop();
-				}
+	/**
+	 *
+	 */
+	function readFrameLabels() {
+		hasFrameLabels 	= false;
+		
+		var labelsLayer	= getSymbolLayerByName('labels');
+		
+		#if debug
+		if (labelsLayer != null) {
+			if (!labelsLayer.empty) trace('MovieSprite "labels" layers should not contain any symbol instances.');
+			// not an error... but not expected.
+		}
+		#end
+		
+		if (labelsLayer != null) {
+			
+			var labelKeyFrames 	= labelsLayer.keyframes;
+			hasFrameLabels 		= labelKeyFrames != null && labelKeyFrames.length > 0;
+			_framesToLabels		= new Map<Int, String>();
+			_labelsToFrames		= new Map<String, Int>();
+			
+			for (k in labelKeyFrames) {
+				_framesToLabels.set(k.index, k.label);
+				_labelsToFrames.set(k.label, k.index);
 			}
 		}
 	}
-
-	public function play(playChildren:Bool=true) {
-		speed._ = 1;
-		if(playChildren) {
-			for (ani in _animators) {
-				var spr = ani.content.get(MovieSprite);
-				if (Type.getClass(spr) == MovieSprite){
-					spr.play();
-				}
-			}
-		}
+	
+	/**
+	 * Direct access to a MovieLayer (swf timeline layer) by name.
+	 * This expects layers in a movieclip to have unique names (it will only return the first layer found)
+	 * @param	name
+	 * @return
+	 */
+	function getSymbolLayerByName(name:String):MovieLayer {
+		var layers = Lambda.filter(symbol.layers, function(layer) { return layer.name == name; } );
+		if (layers != null && layers.length > 0) return layers.first();
+		return null;
 	}
 	
 	
-	override public function setTint(r:Float, g:Float, b:Float) {
-		//super.setTint(r, g, b);
-		for (ani in _animators) {
-			var spr = ani.content.get(Sprite);
-			if (spr != null) spr.setTint(r, g, b);
-		}
-	}
-	
-	
-
     inline function get_position () :Float
 	{
 		return _position;
@@ -307,6 +295,22 @@ class MovieSprite extends Sprite
         }
         return _looped;
     }
+	
+	
+    inline function get_frame():Float return _frame;
+    inline function set_frame(value:Float):Float {
+        _position = value / symbol.frameRate;
+		goto(value);
+		return _frame;
+    }
+	
+	inline function get_totalFrames():Int return Math.ceil(symbol.duration / symbol.frameRate);
+	
+	function get_frameLabels() {
+		if (_frameLabels == null && hasFrameLabels) _frameLabels = Lambda.array(_framesToLabels);
+		return _frameLabels;
+	}
+	
 
     /**
      * Internal method to set the position to 0 and skip the next update. This is required to modify
@@ -323,16 +327,17 @@ class MovieSprite extends Sprite
     var _animators :Array<LayerAnimator>;
 	var _position :Float;
     var _frame :Float;
-
+	
 	var _looped :Signal0 = null;
 	
+	// frame labels...
 	var _framesToLabels:Map<Int,String>;
 	var _labelsToFrames:Map<String,Int>;
 	var _lastLabelFrame:Int = -1;
+	var _frameLabels:Array<String>;
 }
 
-
-class LayerAnimator
+private class LayerAnimator
 {
     public var content (default, null) :Entity;
 
@@ -341,12 +346,9 @@ class LayerAnimator
 	
     public var layer		:MovieLayer;
 	
-	var parent				:MovieSprite;
-	
-    public function new (layer :MovieLayer, parent:MovieSprite)
+    public function new (layer :MovieLayer)
     {
         this.layer = layer;
-        this.parent = parent;
 
         content = new Entity();
         if (layer.empty) {
