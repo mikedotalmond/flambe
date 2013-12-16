@@ -31,53 +31,53 @@ typedef MovieFormat = {
     // The symbol name of this movie
     // TODO(bruno): Why not call it symbol? Movies share the same namespace as textures
     id: String,
-
     layers: Array<LayerFormat>,
 }
 
 typedef LayerFormat = {
     // The name of the layer in Flash
-    name: String,
+    var name:String;
 
     // Optional: Whether this is a flipbook-style animation. Defaults to false
-    flipbook: Null<Bool>,
+    @:optional var flipbook: Bool;
 
-    keyframes: Array<KeyframeFormat>,
+	var keyframes:Array<KeyframeFormat>;
 }
 
 typedef KeyframeFormat = {
+	
     // The number of frames until the next keyframe
-    duration: Int,
+    var duration: Int;
 
     // Optional: The name of the symbol that should be shown at this keyframe
-    ref: Null<String>,
+    @:optional var ref:String;
 
     // Optional: Transform [x, y] properties. Defaults to [0, 0]
-    loc: Null<Array<Float>>,
+    @:optional var loc:Array<Float>;
 
     // Optional: Transform [scaleX, scaleY] properties. Defaults to [1, 1]
-    scale: Null<Array<Float>>,
+    @:optional var scale: Array<Float>;
 
     // Optional: Transform [skewX, skewY] in radians. Defaults to 0
-    skew: Null<Array<Float>>,
+    @:optional var skew: Array<Float>;
 
     // Optional: The anchor point [x, y]. Defaults to [0, 0]
-    pivot: Null<Array<Float>>,
+    @:optional var pivot: Array<Float>;
 
     // Optional: Symbol alpha. Defaults to 1.0
-    alpha: Null<Float>,
+    @:optional var alpha: Float;
 
     // Optional: The frame label that was added to this keyframe in Flash
-    label: Null<String>,
+    @:optional var label: String;
 
     // Optional: Whether this keyframe should be displayed. Defaults to true
-    visible: Null<Bool>,
+    @:optional var visible: Bool;
 
     // Optional: Whether this keyframe is tweened into the next. Defaults to true
-    tweened: Null<Bool>,
+    @:optional var tweened: Bool;
 
     // Optional: Easing factor to tween this keyframe's properties, from -1.0 to 1.0. Defaults to 0
-    ease: Null<Float>,
+    @:optional var ease: Float;
 }
 
 typedef AtlasFormat = {
