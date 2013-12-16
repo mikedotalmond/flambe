@@ -69,24 +69,41 @@ class MovieLayer
     public var name (default, null) :String;
     public var keyframes (default, null) :Array<MovieKeyframe>;
     public var frames (default, null) :Int;
-
-    /** Whether this layer has no symbol instances. */
+	
+    /** Whether this layer has no symbol instances, and no labels. */
     public var empty (default, null) :Bool = true;
-
+	
+	/** Whether this layer has one or more keyframes with labels. */
+    public var hasLabels (default, null) :Bool = false;
+	
+	/** keyframe-labels on this layer */
+	public var frameLabels(default, null):Array<String>;
+	/** indices of keyframe-labels on this layer */
+	public var frameLabelIndices(default, null):Array<Int>;
+	
     public function new (json :LayerFormat)
     {
         name = json.name;
-
+		
+		frameLabels = []; frameLabelIndices = [];
+		
         var prevKf = null;
         keyframes = Arrays.create(json.keyframes.length);
         for (ii in 0...keyframes.length) {
             prevKf = new MovieKeyframe(json.keyframes[ii], prevKf);
             keyframes[ii] = prevKf;
-
-            empty = empty && prevKf.symbolName == null;
+			
+			if (prevKf.label != null) {
+				frameLabels.push(prevKf.label);
+				frameLabelIndices.push(prevKf.index);
+				hasLabels = true;
+			}
+			
+            empty = (empty && prevKf.symbolName == null);
         }
-
-        frames = (prevKf != null) ? prevKf.index + Std.int(prevKf.duration) : 0;
+		
+		empty 	= !hasLabels && empty;
+        frames 	= (prevKf != null) ? prevKf.index + Std.int(prevKf.duration) : 0;
     }
 }
 

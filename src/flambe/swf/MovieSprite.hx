@@ -51,11 +51,8 @@ class MovieSprite extends Sprite
     /** Emitted when the playhead passes a label keyframe on the 'labels' layer. */
 	public var labelPassed(default, null):Signal1<String>;
 	
-	/** true if a 'labels' layer has been detected and parsed **/
+	/** true if any of the layers in the movie timeline have label keyframes **/
 	public var hasFrameLabels(default, null):Bool = false;
-	
-	public var frameLabels(get, never):Array<String>;
-	
 	
     public function new (symbol :MovieSymbol)
     {
@@ -63,15 +60,15 @@ class MovieSprite extends Sprite
 		
         this.symbol = symbol;
 		
-		readFrameLabels();
-		
         speed 		= new AnimatedFloat(1);
 		labelPassed = new Signal1<String>();
 		
         _animators = Arrays.create(symbol.layers.length);
         for (ii in 0..._animators.length) {
             var layer = symbol.layers[ii];
-            _animators[ii] = new LayerAnimator(layer);
+			
+			hasFrameLabels = hasFrameLabels||layer.hasLabels;
+			_animators[ii] = new LayerAnimator(layer);
         }
 		
         _frame = -1;
@@ -101,12 +98,19 @@ class MovieSprite extends Sprite
 		
 	
 	/**
-	 * Get the frame index for a frame-label keyframe on the 'labels' layer.
+	 * Get the frame index for a frame-label keyframe
 	 * @param	name
-	 * @return The frame index, or -1 if no label was found for the passed name
+	 * @return The frame index, or -1 if no label exists for the given name
 	 */
 	public function findLabel(name:String):Float {
-		return hasFrameLabels && _labelsToFrames.exists(name) ? _labelsToFrames.get(name) : -1;
+		for (animator in _animators) {
+			var layer = animator.layer;
+            if (layer.hasLabels) {
+				var i = layer.frameLabels.indexOf(name);
+				if (i != -1) return layer.frameLabelIndices[i];
+            }
+        }
+		return -1;
 	}
 	
 	/**
@@ -210,61 +214,14 @@ class MovieSprite extends Sprite
                 animator.keyframeIdx = 0;
             }
         }
-        for (animator in _animators) {
-            animator.composeFrame(newFrame);
-        }
+		
+		for (animator in _animators) {
+			animator.composeFrame(newFrame);
+			if (animator.labelChanged) labelPassed.emit(animator.currentLabel);
+		}
 		
         _frame = newFrame;
-		
-		if (hasFrameLabels) {
-			var iframe = Std.int(_frame);
-			if (iframe != _lastLabelFrame && _framesToLabels.exists(iframe)) {
-				_lastLabelFrame = iframe;
-				labelPassed.emit(_framesToLabels.get(iframe));
-			}
-        }
     }
-	
-	/**
-	 *
-	 */
-	function readFrameLabels() {
-		hasFrameLabels 	= false;
-		
-		var labelsLayer	= getSymbolLayerByName('labels');
-		
-		#if debug
-		if (labelsLayer != null) {
-			if (!labelsLayer.empty) trace('MovieSprite "labels" layers should not contain any symbol instances.');
-			// not an error... but not expected.
-		}
-		#end
-		
-		if (labelsLayer != null) {
-			
-			var labelKeyFrames 	= labelsLayer.keyframes;
-			hasFrameLabels 		= labelKeyFrames != null && labelKeyFrames.length > 0;
-			_framesToLabels		= new Map<Int, String>();
-			_labelsToFrames		= new Map<String, Int>();
-			
-			for (k in labelKeyFrames) {
-				_framesToLabels.set(k.index, k.label);
-				_labelsToFrames.set(k.label, k.index);
-			}
-		}
-	}
-	
-	/**
-	 * Direct access to a MovieLayer (swf timeline layer) by name.
-	 * This expects layers in a movieclip to have unique names (it will only return the first layer found)
-	 * @param	name
-	 * @return
-	 */
-	function getSymbolLayerByName(name:String):MovieLayer {
-		var layers = Lambda.filter(symbol.layers, function(layer) { return layer.name == name; } );
-		if (layers != null && layers.length > 0) return layers.first();
-		return null;
-	}
 	
 	
     inline function get_position () :Float
@@ -306,11 +263,6 @@ class MovieSprite extends Sprite
 	
 	inline function get_totalFrames():Int return Math.ceil(symbol.duration / symbol.frameRate);
 	
-	function get_frameLabels() {
-		if (_frameLabels == null && hasFrameLabels) _frameLabels = Lambda.array(_framesToLabels);
-		return _frameLabels;
-	}
-	
 
     /**
      * Internal method to set the position to 0 and skip the next update. This is required to modify
@@ -339,17 +291,20 @@ class MovieSprite extends Sprite
 
 private class LayerAnimator
 {
-    public var content (default, null) :Entity;
-
+    public var content(default, null):Entity;
+	
+	public var currentLabel(default, null):String = null;
+	public var labelChanged(default, null):Bool = false;
+	
     public var needsKeyframeUpdate:Bool = false;
     public var keyframeIdx :Int = 0;
 	
-    public var layer		:MovieLayer;
+    public var layer:MovieLayer;
 	
     public function new (layer :MovieLayer)
     {
         this.layer = layer;
-
+		
         content = new Entity();
         if (layer.empty) {
             _sprites = null;
@@ -372,12 +327,14 @@ private class LayerAnimator
 
     public function composeFrame (frame :Float)
     {
-        if (_sprites == null) {
+        labelChanged = false;
+		
+		if (_sprites == null) {
             // TODO(bruno): Test this code path
             // Don't animate empty layers
             return;
         }
-
+		
         var keyframes = layer.keyframes;
         var finalFrame = keyframes.length - 1;
 
@@ -394,11 +351,12 @@ private class LayerAnimator
             ++keyframeIdx;
             needsKeyframeUpdate = true;
         }
-
+		
         var sprite;
         if (needsKeyframeUpdate) {
             needsKeyframeUpdate = false;
-            // Switch to the next instance if this is a multi-layer symbol
+			
+			// Switch to the next instance if this is a multi-layer symbol
             sprite = _sprites[keyframeIdx];
             if (sprite != content.get(Sprite)) {
                 if (Type.getClass(sprite) == MovieSprite) {
@@ -410,14 +368,22 @@ private class LayerAnimator
         } else {
             sprite = content.get(Sprite);
         }
-
+		
+		
         var kf = keyframes[keyframeIdx];
         var visible = kf.visible && kf.symbol != null;
         sprite.visible = visible;
-        if (!visible) {
+		
+		var label = kf.label;
+		if (label != null && label != currentLabel) {
+			currentLabel = label;
+			labelChanged = true;
+		}
+		
+		if (!visible) {
             return; // Don't bother animating invisible layers
-        }
-
+		}
+		
         var x = kf.x;
         var y = kf.y;
         var scaleX = kf.scaleX;
@@ -442,7 +408,7 @@ private class LayerAnimator
                 }
                 interp = ease*t + (1 - ease)*interp;
             }
-
+			
             var nextKf = keyframes[keyframeIdx + 1];
             x += (nextKf.x-x) * interp;
             y += (nextKf.y-y) * interp;
