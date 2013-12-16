@@ -36,49 +36,50 @@ typedef MovieFormat = {
 
 typedef LayerFormat = {
     // The name of the layer in Flash
-    var name:String;
+    name:String,
 
     // Optional: Whether this is a flipbook-style animation. Defaults to false
-    @:optional var flipbook: Bool;
+    ?flipbook: Bool,
 
-	var keyframes:Array<KeyframeFormat>;
+	keyframes:Array<KeyframeFormat>,
 }
 
 typedef KeyframeFormat = {
 	
     // The number of frames until the next keyframe
-    var duration: Int;
-
+    duration: Int,
+	
     // Optional: The name of the symbol that should be shown at this keyframe
-    @:optional var ref:String;
+    ?ref:String,
 
     // Optional: Transform [x, y] properties. Defaults to [0, 0]
-    @:optional var loc:Array<Float>;
+    ?loc:Array<Float>,
 
     // Optional: Transform [scaleX, scaleY] properties. Defaults to [1, 1]
-    @:optional var scale: Array<Float>;
+    ?scale: Array<Float>,
 
     // Optional: Transform [skewX, skewY] in radians. Defaults to 0
-    @:optional var skew: Array<Float>;
+    ?skew: Array<Float>,
 
     // Optional: The anchor point [x, y]. Defaults to [0, 0]
-    @:optional var pivot: Array<Float>;
+    ?pivot: Array<Float>,
 
     // Optional: Symbol alpha. Defaults to 1.0
-    @:optional var alpha: Float;
+	?alpha: Float,
 
     // Optional: The frame label that was added to this keyframe in Flash
-    @:optional var label: String;
+    ?label: String,
 
     // Optional: Whether this keyframe should be displayed. Defaults to true
-    @:optional var visible: Bool;
+    ?visible: Bool,
 
     // Optional: Whether this keyframe is tweened into the next. Defaults to true
-    @:optional var tweened: Bool;
+    ?tweened: Bool,
 
     // Optional: Easing factor to tween this keyframe's properties, from -1.0 to 1.0. Defaults to 0
-    @:optional var ease: Float;
+    ?ease: Float,
 }
+
 
 typedef AtlasFormat = {
     // The path to the atlas
