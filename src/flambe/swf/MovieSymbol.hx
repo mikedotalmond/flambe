@@ -74,7 +74,7 @@ class MovieLayer
     public var empty (default, null) :Bool = true;
 	
 	/** Whether this layer has one or more keyframes with labels. */
-    public var hasLabels (default, null) :Bool = false;
+    public var hasLabels (get, never) :Bool;
 	
 	/** keyframe-labels on this layer */
 	public var frameLabels(default, null):Array<String>;
@@ -96,7 +96,6 @@ class MovieLayer
 			if (prevKf.label != null) {
 				frameLabels.push(prevKf.label);
 				frameLabelIndices.push(prevKf.index);
-				hasLabels = true;
 			}
 			
             empty = (empty && prevKf.symbolName == null);
@@ -105,6 +104,8 @@ class MovieLayer
 		empty 	= !hasLabels && empty;
         frames 	= (prevKf != null) ? prevKf.index + Std.int(prevKf.duration) : 0;
     }
+	
+	inline function get_hasLabels() return frameLabels.length > 0;
 }
 
 class MovieKeyframe
