@@ -51,9 +51,6 @@ class MovieSprite extends Sprite
     /** Emitted when the playhead passes a label keyframe on the 'labels' layer. */
 	public var labelPassed(default, null):Signal1<String>;
 	
-	/** true if any of the layers in the movie timeline have label keyframes **/
-	public var hasFrameLabels(default, null):Bool = false;
-	
     public function new (symbol :MovieSymbol)
     {
         super();
@@ -66,8 +63,6 @@ class MovieSprite extends Sprite
         _animators = Arrays.create(symbol.layers.length);
         for (ii in 0..._animators.length) {
             var layer = symbol.layers[ii];
-			
-			hasFrameLabels = hasFrameLabels||layer.hasLabels;
 			_animators[ii] = new LayerAnimator(layer);
         }
 		
@@ -102,15 +97,8 @@ class MovieSprite extends Sprite
 	 * @param	name
 	 * @return The frame index, or -1 if no label exists for the given name
 	 */
-	public function findLabel(name:String):Float {
-		for (animator in _animators) {
-			var layer = animator.layer;
-            if (layer.hasLabels) {
-				var i = layer.frameLabels.indexOf(name);
-				if (i != -1) return layer.frameLabelIndices[i];
-            }
-        }
-		return -1;
+	public inline function findLabel(name:String):Float {
+		return symbol.findLabel(name);
 	}
 	
 	/**
@@ -208,15 +196,9 @@ class MovieSprite extends Sprite
         }
 
         var wrapped = newFrame < _frame;
-        if (wrapped) {
-            for (animator in _animators) {
-                animator.needsKeyframeUpdate = true;
-                animator.keyframeIdx = 0;
-            }
-        }
 		
 		for (animator in _animators) {
-			animator.composeFrame(newFrame);
+			animator.composeFrame(newFrame, wrapped);
 			if (animator.labelChanged) labelPassed.emit(animator.currentLabel);
 		}
 		
@@ -263,7 +245,8 @@ class MovieSprite extends Sprite
 	
 	inline function get_totalFrames():Int return Math.ceil(symbol.duration / symbol.frameRate);
 	
-
+	//inline function get_hasFrameLabels() return symbol.hasLabels;
+	
     /**
      * Internal method to set the position to 0 and skip the next update. This is required to modify
      * the playback position of child movies during an update step, so that after the update
@@ -325,9 +308,20 @@ private class LayerAnimator
         }
     }
 
-    public function composeFrame (frame :Float)
+	/**
+	 *
+	 * @param	frame
+	 * @param	wrapped
+	 */
+    public function composeFrame (frame :Float, wrapped:Bool)
     {
-        labelChanged = false;
+
+		labelChanged = false;
+		
+		if (wrapped) {
+			needsKeyframeUpdate = true;
+			keyframeIdx = 0;
+		}
 		
 		if (_sprites == null) {
             // TODO(bruno): Test this code path
@@ -335,9 +329,9 @@ private class LayerAnimator
             return;
         }
 		
-        var keyframes = layer.keyframes;
+       var keyframes = layer.keyframes;
         var finalFrame = keyframes.length - 1;
-
+		
         if (frame > layer.frames) {
             // TODO(bruno): Test this code path
             // Not enough frames on this layer, hide it
@@ -355,7 +349,7 @@ private class LayerAnimator
         var sprite;
         if (needsKeyframeUpdate) {
             needsKeyframeUpdate = false;
-			
+			currentLabel = null;
 			// Switch to the next instance if this is a multi-layer symbol
             sprite = _sprites[keyframeIdx];
             if (sprite != content.get(Sprite)) {
@@ -375,7 +369,7 @@ private class LayerAnimator
         sprite.visible = visible;
 		
 		var label = kf.label;
-		if (label != null && label != currentLabel) {
+		if (label != currentLabel) {
 			currentLabel = label;
 			labelChanged = true;
 		}
