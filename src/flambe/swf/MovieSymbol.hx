@@ -84,12 +84,12 @@ class MovieSymbol
 		return frameLabels.exists(name) ? frameLabels.get(name) : -1;
 	}
 	
-	var _name :String;
+	private var _name :String;
 	
 }
 
-class MovieLayer {
-
+class MovieLayer
+{
 	public var name (default, null) :String;
     public var keyframes (default, null) :Array<MovieKeyframe>;
     public var frames (default, null) :Int;

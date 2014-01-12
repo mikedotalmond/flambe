@@ -6,13 +6,11 @@ package flambe.swf;
 
 import flambe.animation.AnimatedFloat;
 import flambe.display.Sprite;
-import flambe.Entity;
 import flambe.math.FMath;
 
 import flambe.swf.MovieSymbol;
 import flambe.util.Signal0;
 import flambe.util.Signal1.Signal1;
-
 
 using flambe.util.Arrays;
 using flambe.util.BitSets;
@@ -131,7 +129,7 @@ class MovieSprite extends Sprite
 	
 	
 	
-    override public function onAdded ()
+	override public function onAdded ()
     {
         super.onAdded();
 
@@ -189,7 +187,7 @@ class MovieSprite extends Sprite
 	}
 
 	
-    function goto (newFrame :Float)
+    private function goto (newFrame :Float)
     {
         if (_frame == newFrame) {
             return; // No change
@@ -205,29 +203,28 @@ class MovieSprite extends Sprite
         _frame = newFrame;
     }
 	
-	
-    inline function get_position () :Float
+    inline private function get_position () :Float
 	{
 		return _position;
 	}
 	
-    function set_position (position :Float) :Float
+    private function set_position (position :Float) :Float
 	{
 		return _position = FMath.clamp(position, 0, symbol.duration);
 	}
 
-    inline function get_paused () :Bool
+    inline private function get_paused () :Bool
 	{
 		return _flags.contains(Sprite.MOVIESPRITE_PAUSED);
 	}
 
-    function set_paused (paused :Bool)
+    private function set_paused (paused :Bool)
 	{
         _flags = _flags.set(Sprite.MOVIESPRITE_PAUSED, paused);
         return paused;
     }
 
-    function get_looped () :Signal0
+    private function get_looped () :Signal0
     {
         if (_looped == null) {
             _looped = new Signal0();
@@ -245,8 +242,6 @@ class MovieSprite extends Sprite
 	
 	inline function get_totalFrames():Int return Math.ceil(symbol.duration / symbol.frameRate);
 	
-	//inline function get_hasFrameLabels() return symbol.hasLabels;
-	
     /**
      * Internal method to set the position to 0 and skip the next update. This is required to modify
      * the playback position of child movies during an update step, so that after the update
@@ -259,11 +254,11 @@ class MovieSprite extends Sprite
         _flags = _flags.add(Sprite.MOVIESPRITE_SKIP_NEXT);
     }
 
-    var _animators :Array<LayerAnimator>;
-	var _position :Float;
-    var _frame :Float;
+    private var _animators :Array<LayerAnimator>;
+	private var _position :Float;
+    private var _frame :Float;
 	
-	var _looped :Signal0 = null;
+	private var _looped :Signal0 = null;
 	
 	// frame labels...
 	var _framesToLabels:Map<Int,String>;
@@ -308,11 +303,6 @@ private class LayerAnimator
         }
     }
 
-	/**
-	 *
-	 * @param	frame
-	 * @param	wrapped
-	 */
     public function composeFrame (frame :Float, wrapped:Bool)
     {
 
@@ -426,5 +416,5 @@ private class LayerAnimator
     }
 
     // The sprite to show at each keyframe index, or null if this layer has no symbol instances
-    var _sprites :Array<Sprite>;
+    private var _sprites :Array<Sprite>;
 }
