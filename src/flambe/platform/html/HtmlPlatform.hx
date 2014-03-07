@@ -32,6 +32,8 @@ class HtmlPlatform
     {
         HtmlUtil.fixAndroidMath();
 
+#if html
+        // If running in a plain web browser, look up the canvas from the embedder
         var canvas :CanvasElement = null;
         try {
             // Use the canvas assigned to us by the flambe.js embedder
@@ -40,6 +42,11 @@ class HtmlPlatform
         }
         Assert.that(canvas != null,
             "Could not find a Flambe canvas! Are you embedding with flambe.js?");
+#else
+        // Otherwise create our own
+        var canvas = Browser.document.createCanvasElement();
+        Browser.document.getElementById("content").appendChild(canvas);
+#end
 
         // Allow the canvas to trap keyboard focus
         canvas.setAttribute("tabindex", "0");
@@ -116,6 +123,9 @@ class HtmlPlatform
         // But the wheel listener should only go on the canvas
         canvas.addEventListener("mousewheel", onMouse, false);
         canvas.addEventListener("DOMMouseScroll", onMouse, false); // https://bugzil.la/719320
+
+        // Suppress the context menu so right-click events aren't interfered with
+        canvas.addEventListener("contextmenu", function (event) event.preventDefault(), false);
 
         // Detect touch support. See http://modernizr.github.com/Modernizr/touch.html for more
         // sophisticated detection methods, but this seems to cover all important browsers
@@ -252,9 +262,11 @@ class HtmlPlatform
 
 #if debug
         new DebugLogic(this);
+#if html
         _catapult = HtmlCatapultClient.canUse() ? new HtmlCatapultClient() : null;
 #end
-        Log.info("Initialized HTML platform", ["renderer", _renderer.getName()]);
+#end
+        Log.info("Initialized HTML platform", ["renderer", _renderer.type]);
     }
 
     public function loadAssetPack (manifest :Manifest) :Promise<AssetPack>
@@ -391,7 +403,7 @@ class HtmlPlatform
         return _motion;
     }
 
-    public function getRenderer () :Renderer
+    public function getRenderer () :InternalRenderer<Dynamic>
     {
         return _renderer;
     }
@@ -406,9 +418,16 @@ class HtmlPlatform
         return (event.clientY - bounds.top)*_stage.height/bounds.height;
     }
 
-    private function createRenderer (canvas :CanvasElement) :Renderer
+    private function createRenderer (canvas :CanvasElement) :InternalRenderer<Dynamic>
     {
 #if !flambe_disable_webgl
+
+#if firefox
+        // WebGL is buggy in Firefox OS 1.1, so blacklist it there
+        // https://developer.mozilla.org/en-US/docs/Gecko_user_agent_string_reference#Firefox_OS
+        var majorVersion = ~/\bFirefox\/(\d+)/;
+        if (!majorVersion.match(Browser.navigator.userAgent) || Std.parseInt(majorVersion.matched(1)) >= 26)
+#end
         try {
             var gl = canvas.getContextWebGL(cast {
 #if !flambe_transparent
@@ -448,7 +467,7 @@ class HtmlPlatform
     // Statically initialized subsystems
     private var _mouse :HtmlMouse;
     private var _pointer :BasicPointer;
-    private var _renderer :Renderer;
+    private var _renderer :InternalRenderer<Dynamic>;
     private var _stage :HtmlStage;
     private var _touch :TouchSystem;
 

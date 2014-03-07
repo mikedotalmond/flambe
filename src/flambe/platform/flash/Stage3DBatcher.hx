@@ -17,20 +17,20 @@ import flash.geom.Vector3D;
 import hxsl.Shader;
 
 import flambe.display.BlendMode;
-import flambe.platform.shader.DrawImage;
 import flambe.platform.shader.DrawPattern;
+import flambe.platform.shader.DrawTexture;
 import flambe.platform.shader.FillRect;
 import flambe.util.Assert;
 
-@:final class Stage3DBatcher
+class Stage3DBatcher
 {
     public var data (default, null) :Vector<Float>;
 
     public function new (context3D :Context3D)
     {
         _context3D = context3D;
-        _drawImageShader = new DrawImage();
-        _drawImageWithTintShader = new DrawImageWithTint();
+        _drawTextureShader = new DrawTexture();
+        _drawTextureWithTintShader = new DrawTextureWithTint();
         _drawPatternShader = new DrawPattern();
         _fillRectShader = new FillRect();
 
@@ -49,9 +49,9 @@ import flambe.util.Assert;
         // Switch to the back buffer
         if (_currentRenderTarget != null) {
             flush();
-			#if flambe_debug_renderer
+#if flambe_debug_renderer
             trace("Resetting render target to back buffer");
-			#end
+#end
             _context3D.setRenderToBackBuffer();
             _currentRenderTarget = _lastRenderTarget = null;
         }
@@ -74,10 +74,10 @@ import flambe.util.Assert;
     }
 
     /** Safely delete a texture. */
-    public function deleteTexture (texture :Stage3DTexture)
+    public function deleteTexture (texture :Stage3DTextureRoot)
     {
         // If we have unflushed quads that use this texture, flush them now
-        if (texture == _lastTexture) {
+        if (_lastTexture != null && _lastTexture.root == texture) {
             flush();
             _lastTexture = null;
         }
@@ -86,7 +86,7 @@ import flambe.util.Assert;
     }
 
     /** Reads the pixels out from a texture. May return a BitmapData larger than requested. */
-    public function readPixels (texture :Stage3DTexture, x :Int, y :Int,
+    public function readPixels (texture :Stage3DTextureRoot, x :Int, y :Int,
         width :Int, height :Int) :BitmapData
     {
         // Turns out Stage3D doesn't make it easy to get data out of a texture. So we have to:
@@ -134,7 +134,8 @@ import flambe.util.Assert;
         ]));
         ortho.transformVectors(scratch, scratch);
 
-        var offset = prepareDrawImage(null, Copy, null, texture);
+        var offset = prepareDrawTexture(null, Copy, null,
+            texture.createTexture(texture.width, texture.height));
         data[  offset] = scratch[0];
         data[++offset] = scratch[1];
         data[++offset] = 0;
@@ -143,20 +144,20 @@ import flambe.util.Assert;
 
         data[++offset] = scratch[3];
         data[++offset] = scratch[4];
-        data[++offset] = texture.maxU;
+        data[++offset] = 1;
         data[++offset] = 0;
         data[++offset] = 1;
 
         data[++offset] = scratch[6];
         data[++offset] = scratch[7];
-        data[++offset] = texture.maxU;
-        data[++offset] = texture.maxV;
+        data[++offset] = 1;
+        data[++offset] = 1;
         data[++offset] = 1;
 
         data[++offset] = scratch[9];
         data[++offset] = scratch[10];
         data[++offset] = 0;
-        data[++offset] = texture.maxV;
+        data[++offset] = 1;
         data[++offset] = 1;
 
         // Create a temporary back buffer of the given size, and draw the texture on it
@@ -178,32 +179,32 @@ import flambe.util.Assert;
         return pixels;
     }
 
-    /** Adds a quad to the batch, using the DrawImage shader. */
-    public function prepareDrawImage (renderTarget :Stage3DTexture,
+    /** Adds a quad to the batch, using the DrawTexture shader. */
+    public function prepareDrawTexture (renderTarget :Stage3DTextureRoot,
         blendMode :BlendMode, scissor :Rectangle, texture :Stage3DTexture) :Int
     {
         if (texture != _lastTexture) {
             flush();
             _lastTexture = texture;
         }
-        return prepareQuad(5, renderTarget, blendMode, scissor, _drawImageShader);
+        return prepareQuad(5, renderTarget, blendMode, scissor, _drawTextureShader);
     }
+
 	
-	
-	/** Adds a quad to the batch, using the DrawImageWithTint shader. */
-    public function prepareDrawTintedImage (renderTarget :Stage3DTexture,
+	/** Adds a quad to the batch, using the DrawTextureWithTint shader. */
+    public function prepareDrawTintedTexture (renderTarget :Stage3DTextureRoot,
         blendMode :BlendMode, scissor :Rectangle, texture :Stage3DTexture) :Int
     {
         if (texture != _lastTexture) {
             flush();
             _lastTexture = texture;
         }
-        return prepareQuad(8, renderTarget, blendMode, scissor, _drawImageWithTintShader);
+        return prepareQuad(8, renderTarget, blendMode, scissor, _drawTextureWithTintShader);
     }
 	
 
     /** Adds a quad to the batch, using the DrawPattern shader. */
-    public function prepareDrawPattern (renderTarget :Stage3DTexture,
+    public function prepareDrawPattern (renderTarget :Stage3DTextureRoot,
         blendMode :BlendMode, scissor :Rectangle, texture :Stage3DTexture) :Int
     {
         if (texture != _lastTexture) {
@@ -214,13 +215,13 @@ import flambe.util.Assert;
     }
 
     /** Adds a quad to the batch, using the FillRect shader. */
-    public function prepareFillRect (renderTarget :Stage3DTexture,
+    public function prepareFillRect (renderTarget :Stage3DTextureRoot,
         blendMode :BlendMode, scissor :Rectangle) :Int
     {
         return prepareQuad(6, renderTarget, blendMode, scissor, _fillRectShader);
     }
 
-    private function prepareQuad (elementsPerVertex :Int, renderTarget :Stage3DTexture,
+    private function prepareQuad (elementsPerVertex :Int, renderTarget :Stage3DTextureRoot,
         blendMode :BlendMode, scissor :Rectangle, shader :Shader) :Int
     {
         if (renderTarget != _lastRenderTarget) {
@@ -278,9 +279,9 @@ import flambe.util.Assert;
         }
 
         if (_lastBlendMode != _currentBlendMode) {
-			#if flambe_debug_renderer
+#if flambe_debug_renderer
             trace("Changing blend mode: " + _lastBlendMode);
-			#end
+#end
             switch (_lastBlendMode) {
                 case Normal: _context3D.setBlendFactors(ONE, ONE_MINUS_SOURCE_ALPHA);
                 case Add: _context3D.setBlendFactors(ONE, ONE);
@@ -297,24 +298,26 @@ import flambe.util.Assert;
 
         var vertexBuffer = null;
         // TODO(bruno): Optimize with switch/case?
-        if (_lastShader == _drawImageShader) {
-            _drawImageShader.texture = _lastTexture.nativeTexture;
-            _drawImageShader.rebuildVars();
+        if (_lastShader == _drawTextureShader) {
+            _drawTextureShader.texture = _lastTexture.root.nativeTexture;
+            _drawTextureShader.rebuildVars();
             vertexBuffer = _vertexBuffer5;
-			
-		} else if (_lastShader == _drawImageWithTintShader) {
-			_drawImageWithTintShader.texture = _lastTexture.nativeTexture;
-            _drawImageWithTintShader.rebuildVars();
+
+		} else if (_lastShader == _drawTextureWithTintShader) {
+			_drawTextureWithTintShader.texture = _lastTexture.root.nativeTexture;
+            _drawTextureWithTintShader.rebuildVars();
             vertexBuffer = _vertexBuffer8;
 
         } else if (_lastShader == _drawPatternShader) {
-            var maxUV = _scratchVector3D;
-            maxUV.x = _lastTexture.maxU;
-            maxUV.y = _lastTexture.maxV;
-            // maxUV.z = 0;
-            // maxUV.w = 0;
-            _drawPatternShader.texture = _lastTexture.nativeTexture;
-            _drawPatternShader.maxUV = maxUV;
+            var region = _scratchVector3D;
+            var texture = _lastTexture;
+            var root = texture.root;
+            region.z = texture.rootX / root.width; // x
+            region.w = texture.rootY / root.height; // y
+            region.x = texture.width / root.width; // width
+            region.y = texture.height / root.height; // height
+            _drawPatternShader.texture = root.nativeTexture;
+            _drawPatternShader.region = region;
             _drawPatternShader.rebuildVars();
             vertexBuffer = _vertexBuffer5;
 
@@ -322,15 +325,15 @@ import flambe.util.Assert;
             vertexBuffer = _vertexBuffer6;
         }
 
-        // vertexBuffer.uploadFromVector(data, 0, _quads*4);
+        // vertexBuffer.uploadFromVector(data, 0, _quads<<2);
         vertexBuffer.uploadFromVector(data, 0, _maxQuads<<2);
         _lastShader.bind(_context3D, vertexBuffer);
         _context3D.drawTriangles(_quadIndexBuffer, 0, _quads<<1);
         _lastShader.unbind(_context3D);
 
-		#if flambe_debug_renderer
+#if flambe_debug_renderer
         trace("Flushed " + _quads + " / " + _maxQuads + " quads");
-		#end
+#end
         _quads = 0;
         _dataOffset = 0;
     }
@@ -386,21 +389,21 @@ import flambe.util.Assert;
 
     // Used to keep track of context changes requiring a flush
     private var _lastBlendMode :BlendMode;
-    private var _lastRenderTarget :Stage3DTexture;
+    private var _lastRenderTarget :Stage3DTextureRoot;
     private var _lastShader :Shader;
     private var _lastTexture :Stage3DTexture;
     private var _lastScissor :Rectangle;
 
     // Used to avoid redundant Context3D calls
     private var _currentBlendMode :BlendMode;
-    private var _currentRenderTarget :Stage3DTexture;
+    private var _currentRenderTarget :Stage3DTextureRoot;
 
     // Extra stuff for scissor test tracking
     private var _scratchScissor :Rectangle;
     private var _pendingSetScissor :Bool;
 
-    private var _drawImageShader :DrawImage;
-    private var _drawImageWithTintShader :DrawImageWithTint;
+    private var _drawTextureShader :DrawTexture;
+    private var _drawTextureWithTintShader :DrawTextureWithTint;
     private var _drawPatternShader :DrawPattern;
     private var _fillRectShader :FillRect;
 

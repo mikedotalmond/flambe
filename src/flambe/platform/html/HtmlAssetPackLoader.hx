@@ -43,7 +43,7 @@ class HtmlAssetPackLoader extends BasicAssetPackLoader
                     _URL.revokeObjectURL(image.src);
                 }
 
-                var texture = _platform.getRenderer().createTexture(image);
+                var texture = _platform.getRenderer().createTextureFromImage(image);
                 if (texture != null) {
                     handleLoad(entry, texture);
                 } else {
@@ -314,6 +314,13 @@ class HtmlAssetPackLoader extends BasicAssetPackLoader
             { format: OGG,  mimeType: "audio/ogg; codecs=vorbis" },
             { format: WAV,  mimeType: "audio/wav" },
         ];
+#if flambe_disable_firefox_mp3
+        // Temporary hack to disable Firefox MP3 loading. This will no longer be necessary after
+        // Firefox 28: https://bugzilla.mozilla.org/show_bug.cgi?id=967007
+        if (userAgent.indexOf("Gecko/") >= 0) {
+            types.splice(1, 1);
+        }
+#end
         var result = [];
         for (type in types) {
             // IE9's canPlayType() will throw an error in some rare cases:

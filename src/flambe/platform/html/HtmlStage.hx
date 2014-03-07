@@ -30,6 +30,9 @@ class HtmlStage
         _canvas = canvas;
         resize = new Signal0();
 
+#if flambe_disable_html_retina
+        scaleFactor = 1;
+#else
         // If the DPI is being scaled by the browser, reverse it so that one canvas pixel equals
         // one screen pixel
         scaleFactor = computeScaleFactor();
@@ -38,6 +41,7 @@ class HtmlStage
             HtmlUtil.setVendorStyle(_canvas, "transform-origin", "top left");
             HtmlUtil.setVendorStyle(_canvas, "transform", "scale(" + (1/scaleFactor) + ")");
         }
+#end
 
 #if !flambe_disable_autoresize
         if (HtmlUtil.SHOULD_HIDE_MOBILE_BROWSER) {
@@ -90,12 +94,25 @@ class HtmlStage
 
     public function lockOrientation (orient :Orientation)
     {
-        // Nothing until mobile browsers support it
+        var lockOrientation = HtmlUtil.loadExtension("lockOrientation", Browser.window.screen).value;
+        if (lockOrientation != null) {
+            var htmlOrient = switch (orient) {
+                case Portrait: "portrait";
+                case Landscape: "landscape";
+            };
+            var allowed = Reflect.callMethod(Browser.window.screen, lockOrientation, [htmlOrient]);
+            if (!allowed) {
+                Log.warn("The request to lockOrientation() was refused by the browser");
+            }
+        }
     }
 
     public function unlockOrientation ()
     {
-        // Nothing until mobile browsers support it
+        var unlockOrientation = HtmlUtil.loadExtension("unlockOrientation", Browser.window.screen).value;
+        if (unlockOrientation != null) {
+            Reflect.callMethod(Browser.window.screen, unlockOrientation, []);
+        }
     }
 
     public function requestResize (width :Int, height :Int)

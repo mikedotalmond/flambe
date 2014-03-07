@@ -8,21 +8,20 @@ import hxsl.Shader;
 
 /**
  * Shader that draws textured triangles with a given alpha.
- * Requries 5 Floats/Vertex
  */
-@:final class DrawImage extends Shader
+class DrawTexture extends Shader
 {
     static var SRC = {
         var input :{
             pos :Float2,
             uv :Float2,
             alpha :Float,
-		};
+        };
 
         var _uv :Float2;
         var _alpha :Float;
-		
-		function vertex () {
+
+        function vertex () {
             _uv = input.uv;
             _alpha = input.alpha;
             out = input.pos.xyzw;
@@ -35,12 +34,11 @@ import hxsl.Shader;
 }
 
 
-
 /**
  * Shader that draws textured triangles with a given alpha and rgb tint (multipliers)
  * Requries 8 Floats/Vertex
  */
-@:final class DrawImageWithTint extends Shader {
+@:final class DrawTextureWithTint extends Shader {
 	
     static var SRC = {
 		

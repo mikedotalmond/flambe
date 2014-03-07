@@ -18,7 +18,7 @@ import flambe.util.Assert;
 class WebGLGraphics
     implements InternalGraphics
 {
-    public function new (batcher :WebGLBatcher, renderTarget :WebGLTexture)
+    public function new (batcher :WebGLBatcher, renderTarget :WebGLTextureRoot)
     {
         // Initialize this here to prevent blowing up during static init on browsers without typed
         // array support
@@ -43,7 +43,6 @@ class WebGLGraphics
         }
 
         current.matrix.clone(state.matrix);
-		
         state.alpha = current.alpha;
         state.tintR = current.tintR;
         state.tintG = current.tintG;
@@ -51,8 +50,7 @@ class WebGLGraphics
 		
         state.blendMode = current.blendMode;
         state.scissor = (current.scissor != null) ? current.scissor.clone(state.scissor) : null;
-
-		_stateList = state;
+        _stateList = state;
     }
 
     public function translate (x :Float, y :Float)
@@ -101,34 +99,34 @@ class WebGLGraphics
         _stateList = _stateList.prev;
     }
 
-    public function drawImage (texture :Texture, x :Float, y :Float)
+    public function drawTexture (texture :Texture, x :Float, y :Float)
     {
-        drawSubImage(texture, x, y, 0, 0, texture.width, texture.height);
+        drawSubTexture(texture, x, y, 0, 0, texture.width, texture.height);
     }
 
-    public function drawSubImage (texture :Texture, destX :Float, destY :Float,
+    public function drawSubTexture (texture :Texture, destX :Float, destY :Float,
         sourceX :Float, sourceY :Float, sourceW :Float, sourceH :Float)
     {
         var state = getTopState();
         var texture :WebGLTexture = cast texture;
-        texture.assertNotDisposed();
+        var root = texture.root;
+        root.assertNotDisposed();
 
         var pos = transformQuad(destX, destY, sourceW, sourceH);
-        var w = texture.width;
-        var h = texture.height;
-        var u1 = texture.maxU*sourceX / w;
-        var v1 = texture.maxV*sourceY / h;
-        var u2 = texture.maxU*(sourceX + sourceW) / w;
-        var v2 = texture.maxV*(sourceY + sourceH) / h;
-
-		var alpha = state.alpha;
+        var rootWidth = root.width;
+        var rootHeight = root.height;
+        var u1 = (texture.rootX+sourceX) / rootWidth;
+        var v1 = (texture.rootY+sourceY) / rootHeight;
+        var u2 = u1 + sourceW/rootWidth;
+        var v2 = v1 + sourceH/rootHeight;
+        var alpha = state.alpha;
 		var tintR = state.tintR;
 		var tintG = state.tintG;
 		var tintB = state.tintB;
-		
-        var offset = _batcher.prepareDrawImageWithTint(_renderTarget, state.blendMode, state.scissor, texture);
+
+        var offset = _batcher.prepareDrawTintedTexture(_renderTarget, state.blendMode, state.scissor, texture);
         var data = _batcher.data;
-		
+
         data[  offset] = pos[0];
         data[++offset] = pos[1];
         data[++offset] = u1;
@@ -170,11 +168,12 @@ class WebGLGraphics
     {
         var state = getTopState();
         var texture :WebGLTexture = cast texture;
-        texture.assertNotDisposed();
+        var root = texture.root;
+        root.assertNotDisposed();
 
         var pos = transformQuad(x, y, width, height);
-        var u2 = texture.maxU * (width / texture.width);
-        var v2 = texture.maxV * (height / texture.height);
+        var u2 = width / root.width;
+        var v2 = height / root.height;
         var alpha = state.alpha;
 
         var offset = _batcher.prepareDrawPattern(_renderTarget, state.blendMode, state.scissor, texture);
@@ -261,7 +260,7 @@ class WebGLGraphics
     {
         getTopState().blendMode = blendMode;
     }
-	
+
 	public function setTint(r:Float,g:Float,b:Float)
     {
         getTopState().tintR = r;
@@ -354,7 +353,7 @@ class WebGLGraphics
     private static var _scratchQuadArray :Float32Array = null;
 
     private var _batcher :WebGLBatcher;
-    private var _renderTarget :WebGLTexture;
+    private var _renderTarget :WebGLTextureRoot;
 
     private var _inverseProjection :Matrix = null;
     private var _stateList :DrawingState = null;

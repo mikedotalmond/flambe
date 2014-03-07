@@ -20,7 +20,7 @@ import flambe.util.Assert;
 @:final class Stage3DGraphics
     implements InternalGraphics
 {
-    public function new (batcher :Stage3DBatcher, renderTarget :Stage3DTexture)
+    public function new (batcher :Stage3DBatcher, renderTarget :Stage3DTextureRoot)
     {
         _batcher = batcher;
         _renderTarget = renderTarget;
@@ -53,7 +53,6 @@ import flambe.util.Assert;
         if (state.scissorEnabled) {
             state.scissor.copyFrom(current.scissor);
         }
-		
         _stateList = state;
     }
 
@@ -98,39 +97,37 @@ import flambe.util.Assert;
         _stateList = _stateList.prev;
     }
 
-    public function drawImage (texture :Texture, destX :Float, destY :Float)
+    public function drawTexture (texture :Texture, destX :Float, destY :Float)
     {
-        drawSubImage(texture, destX, destY, 0, 0, texture.width, texture.height);
+        drawSubTexture(texture, destX, destY, 0, 0, texture.width, texture.height);
     }
 
-	
-	public function drawSubImage (texture :Texture, destX :Float, destY :Float,
+    public function drawSubTexture (texture :Texture, destX :Float, destY :Float,
         sourceX :Float, sourceY :Float, sourceW :Float, sourceH :Float)
     {
         var state = getTopState();
         if (state.emptyScissor()) {
             return;
         }
-		
         var texture = Lib.as(texture, Stage3DTexture);
-        texture.assertNotDisposed();
+        var root = texture.root;
+        root.assertNotDisposed();
 
         var pos = transformQuad(destX, destY, sourceW, sourceH);
-        var w = texture.width;
-        var h = texture.height;
-        var u1 = texture.maxU*sourceX / w;
-        var v1 = texture.maxV*sourceY / h;
-        var u2 = texture.maxU*(sourceX + sourceW) / w;
-        var v2 = texture.maxV*(sourceY + sourceH) / h;
-		
-		var alpha = state.alpha;
+        var rootWidth = root.width;
+        var rootHeight = root.height;
+        var u1 = (texture.rootX+sourceX) / rootWidth;
+        var v1 = (texture.rootY+sourceY) / rootHeight;
+        var u2 = u1 + sourceW/rootWidth;
+        var v2 = v1 + sourceH/rootHeight;
+        var alpha = state.alpha;
 		var tintR = state.tintR;
 		var tintG = state.tintG;
 		var tintB = state.tintB;
-		
-        var offset = _batcher.prepareDrawTintedImage(_renderTarget, state.blendMode, state.getScissor(), texture);
+
+        var offset = _batcher.prepareDrawTintedTexture(_renderTarget, state.blendMode, state.getScissor(), texture);
         var data = _batcher.data;
-		
+
         data[  offset] = pos[0];
         data[++offset] = pos[1];
         data[++offset] = u1;
@@ -167,9 +164,7 @@ import flambe.util.Assert;
         data[++offset] = tintG;
         data[++offset] = tintB;
     }
-	
-	
-	
+
     public function drawPattern (texture :Texture, x :Float, y :Float, width :Float, height :Float)
     {
         var state = getTopState();
@@ -177,11 +172,12 @@ import flambe.util.Assert;
             return;
         }
         var texture = Lib.as(texture, Stage3DTexture);
-        texture.assertNotDisposed();
+        var root = texture.root;
+        root.assertNotDisposed();
 
         var pos = transformQuad(x, y, width, height);
-        var u2 = texture.maxU * (width / texture.width);
-        var v2 = texture.maxV * (height / texture.height);
+        var u2 = width / root.width;
+        var v2 = height / root.height;
         var alpha = state.alpha;
 
         var offset = _batcher.prepareDrawPattern(_renderTarget, state.blendMode, state.getScissor(), texture);
@@ -271,7 +267,7 @@ import flambe.util.Assert;
     {
         getTopState().blendMode = blendMode;
     }
-	
+
 	public function setTint (r:Float,g:Float,b:Float)
     {
         getTopState().tintR = r;
@@ -381,18 +377,18 @@ import flambe.util.Assert;
     })();
 
     private var _batcher :Stage3DBatcher;
-    private var _renderTarget :Stage3DTexture;
+    private var _renderTarget :Stage3DTextureRoot;
 
     private var _inverseProjection :Matrix3D;
     private var _stateList :DrawingState;
 }
 
-@:final class DrawingState
+private class DrawingState
 {
     public var matrix :Matrix3D;
     public var alpha :Float;
     public var blendMode :BlendMode;
-	
+
 	public var tintR:Float;
 	public var tintG:Float;
 	public var tintB:Float;
@@ -433,7 +429,7 @@ import flambe.util.Assert;
         scissor.setTo(x, y, width, height);
         scissorEnabled = true;
     }
-	
+
     /**
      * Whether the scissor region is empty. Calling Context3D.setScissorRectangle with an empty
      * rectangle actually disables scissor testing, so this needs to be queried before every draw

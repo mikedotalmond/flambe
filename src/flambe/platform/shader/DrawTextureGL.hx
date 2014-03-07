@@ -10,7 +10,7 @@ import js.html.webgl.RenderingContext;
 
 import flambe.platform.html.WebGLTexture;
 
-class DrawImageGL extends ShaderGL
+class DrawTextureGL extends ShaderGL
 {
     public function new (gl :RenderingContext)
     {
@@ -77,7 +77,7 @@ class DrawImageGL extends ShaderGL
 
 
 
-class DrawImageWithTintGL extends ShaderGL
+class DrawTextureWithTintGL extends ShaderGL
 {
     public function new (gl :RenderingContext)
     {

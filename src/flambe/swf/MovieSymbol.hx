@@ -24,7 +24,7 @@ class MovieSymbol
     /**
      * The total number of frames in this movie.
      */
-    public var frames (default, null) :Int;
+    public var frames (default, null) :Float;
 
     /**
      * The rate that this movie is played, in frames per second.
@@ -47,12 +47,12 @@ class MovieSymbol
         _name = json.id;
         frameRate = lib.frameRate;
 		frameLabels = new Map<String,Float>();
-		
-        frames = 0;
+
+        frames = 0.0;
         layers = Arrays.create(json.layers.length);
         for (ii in 0...layers.length) {
             var layer = new MovieLayer(json.layers[ii]);
-            frames = cast Math.max(layer.frames, frames);
+            frames = Math.max(layer.frames, frames);
 			for (kf  in layer.keyframes) {
 				var kfi = kf.index;
 				if (kf.label != null) frameLabels.set(kf.label, kf.index);
@@ -60,11 +60,10 @@ class MovieSymbol
 			
             layers[ii] = layer;
         }
-		
         duration = frames / frameRate;
     }
 
-    public function get_name () :String
+    inline private function get_name () :String
     {
         return _name;
     }
@@ -73,7 +72,7 @@ class MovieSymbol
     {
         return new MovieSprite(this);
     }
-	
+
 	/**
 	 * Find the frame for a given label
 	 * @param	name
@@ -84,44 +83,44 @@ class MovieSymbol
 		return frameLabels.exists(name) ? frameLabels.get(name) : -1;
 	}
 	
-	private var _name :String;
-	
+    private var _name :String;
 }
 
 class MovieLayer
 {
-	public var name (default, null) :String;
+    public var name (default, null) :String;
     public var keyframes (default, null) :Array<MovieKeyframe>;
-    public var frames (default, null) :Int;
-	
+    public var frames (default, null) :Float;
+
     /** Whether this layer has no symbol instances, and no labels. */
     public var empty (default, null) :Bool = true;
-	
+
     public function new (json :LayerFormat)
     {
         name = json.name;
-		
+
         var prevKf = null;
         keyframes = Arrays.create(json.keyframes.length);
         for (ii in 0...keyframes.length) {
             prevKf = new MovieKeyframe(json.keyframes[ii], prevKf);
             keyframes[ii] = prevKf;
+
             empty = (empty && prevKf.symbolName == null && prevKf.label == null);
         }
-		
-		frames 	= (prevKf != null) ? prevKf.index + Std.int(prevKf.duration) : 0;
+
+		frames 	= (prevKf != null) ? prevKf.index + prevKf.duration : 0;
     }
 }
 
 class MovieKeyframe
 {
-    public var index (default, null) :Int;
+    public var index (default, null) :Float;
 
     /** The length of this keyframe in frames. */
-    public var duration (default, null) :Int;
+    public var duration (default, null) :Float;
 
-    public var symbolName (default, null) :String;
-    public var symbol :Symbol = null;
+    @:allow(flambe) var symbolName (default, null) :String;
+    public var symbol (default, null) :Symbol = null;
 
     public var label (default, null) :String;
 
@@ -197,5 +196,10 @@ class MovieKeyframe
     @:allow(flambe) inline function setVisible (visible :Bool)
     {
         this.visible = visible;
+    }
+
+    @:allow(flambe) inline function setSymbol (symbol :Symbol)
+    {
+        this.symbol = symbol;
     }
 }

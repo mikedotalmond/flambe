@@ -31,55 +31,54 @@ typedef MovieFormat = {
     // The symbol name of this movie
     // TODO(bruno): Why not call it symbol? Movies share the same namespace as textures
     id: String,
+
     layers: Array<LayerFormat>,
 }
 
 typedef LayerFormat = {
     // The name of the layer in Flash
-    name:String,
+    name: String,
 
     // Optional: Whether this is a flipbook-style animation. Defaults to false
-    ?flipbook: Bool,
+    flipbook: Null<Bool>,
 
-	keyframes:Array<KeyframeFormat>,
+    keyframes: Array<KeyframeFormat>,
 }
 
 typedef KeyframeFormat = {
-	
     // The number of frames until the next keyframe
-    duration: Int,
-	
+    duration: Float,
+
     // Optional: The name of the symbol that should be shown at this keyframe
-    ?ref:String,
+    ref: Null<String>,
 
     // Optional: Transform [x, y] properties. Defaults to [0, 0]
-    ?loc:Array<Float>,
+    loc: Null<Array<Float>>,
 
     // Optional: Transform [scaleX, scaleY] properties. Defaults to [1, 1]
-    ?scale: Array<Float>,
+    scale: Null<Array<Float>>,
 
     // Optional: Transform [skewX, skewY] in radians. Defaults to 0
-    ?skew: Array<Float>,
+    skew: Null<Array<Float>>,
 
     // Optional: The anchor point [x, y]. Defaults to [0, 0]
-    ?pivot: Array<Float>,
+    pivot: Null<Array<Float>>,
 
     // Optional: Symbol alpha. Defaults to 1.0
-	?alpha: Float,
+    alpha: Null<Float>,
 
     // Optional: The frame label that was added to this keyframe in Flash
-    ?label: String,
+    label: Null<String>,
 
     // Optional: Whether this keyframe should be displayed. Defaults to true
-    ?visible: Bool,
+    visible: Null<Bool>,
 
     // Optional: Whether this keyframe is tweened into the next. Defaults to true
-    ?tweened: Bool,
+    tweened: Null<Bool>,
 
     // Optional: Easing factor to tween this keyframe's properties, from -1.0 to 1.0. Defaults to 0
-    ?ease: Float,
+    ease: Null<Float>,
 }
-
 
 typedef AtlasFormat = {
     // The path to the atlas
