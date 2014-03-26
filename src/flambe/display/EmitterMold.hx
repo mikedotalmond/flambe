@@ -43,9 +43,25 @@ class EmitterMold
     public var alphaStart :Float;
     public var alphaStartVariance :Float;
 
+	public var redStart:Float;
+	public var greenStart:Float;
+	public var blueStart:Float;
+	
+	public var redStartVariance:Float;
+	public var greenStartVariance:Float;
+	public var blueStartVariance:Float;
+	
     public var alphaEnd :Float;
     public var alphaEndVariance :Float;
 
+	public var redEnd:Float;
+	public var greenEnd:Float;
+	public var blueEnd:Float;
+	
+	public var redEndVariance:Float;
+	public var greenEndVariance:Float;
+	public var blueEndVariance:Float;
+	
     public var angle :Float;
     public var angleVariance :Float;
 
@@ -111,9 +127,15 @@ class EmitterMold
             case "emittertype":
                 type = (Std.int(getValue(element)) == 0) ? Gravity : Radial;
             case "finishcolor":
-                alphaEnd = getFloat(element, "alpha");
+                alphaEnd 	= getFloat(element, "alpha");
+				redEnd		= getFloat(element, "red");
+				greenEnd	= getFloat(element, "green");
+				blueEnd 	= getFloat(element, "blue");
             case "finishcolorvariance":
-                alphaEndVariance = getFloat(element, "alpha");
+                alphaEndVariance 	= getFloat(element, "alpha");
+				redEndVariance		= getFloat(element, "red");
+				greenEndVariance	= getFloat(element, "green");
+				blueEndVariance 	= getFloat(element, "blue");
             case "finishparticlesize":
                 sizeEnd = getValue(element);
             case "finishparticlesizevariance":
@@ -158,9 +180,15 @@ class EmitterMold
             case "speedvariance":
                 speedVariance = getValue(element);
             case "startcolor":
-                alphaStart = getFloat(element, "alpha");
+                alphaStart 	= getFloat(element, "alpha");
+				redStart	= getFloat(element, "red");
+				greenStart	= getFloat(element, "green");
+				blueStart 	= getFloat(element, "blue");
             case "startcolorvariance":
-                alphaStartVariance = getFloat(element, "alpha");
+                alphaStartVariance 	= getFloat(element, "alpha");
+				redStartVariance	= getFloat(element, "red");
+				greenStartVariance	= getFloat(element, "green");
+				blueStartVariance 	= getFloat(element, "blue");
             case "startparticlesize":
                 sizeStart = getValue(element);
             case "startparticlesizevariance":

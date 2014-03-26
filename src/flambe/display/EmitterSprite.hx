@@ -39,6 +39,24 @@ class EmitterSprite extends Sprite
 
     public var alphaStart (default, null) :AnimatedFloat;
     public var alphaStartVariance (default, null) :AnimatedFloat;
+	
+    public var redStart (default, null) :AnimatedFloat;
+    public var redStartVariance (default, null) :AnimatedFloat;
+
+    public var greenStart (default, null) :AnimatedFloat;
+    public var greenStartVariance (default, null) :AnimatedFloat;
+
+	public var blueStart (default, null) :AnimatedFloat;
+    public var blueStartVariance (default, null) :AnimatedFloat;
+
+    public var redEnd (default, null) :AnimatedFloat;
+    public var redEndVariance (default, null) :AnimatedFloat;
+
+    public var greenEnd (default, null) :AnimatedFloat;
+    public var greenEndVariance (default, null) :AnimatedFloat;
+
+    public var blueEnd (default, null) :AnimatedFloat;
+    public var blueEndVariance (default, null) :AnimatedFloat;
 
     public var alphaEnd (default, null) :AnimatedFloat;
     public var alphaEndVariance (default, null) :AnimatedFloat;
@@ -91,8 +109,22 @@ class EmitterSprite extends Sprite
 
         alphaEnd = new AnimatedFloat(mold.alphaEnd);
         alphaEndVariance = new AnimatedFloat(mold.alphaEndVariance);
-        alphaStart = new AnimatedFloat(mold.alphaStart);
+        redEnd = new AnimatedFloat(mold.redEnd);
+        redEndVariance = new AnimatedFloat(mold.redEndVariance);
+		greenEnd = new AnimatedFloat(mold.greenEnd);
+        greenEndVariance = new AnimatedFloat(mold.greenEndVariance);
+		blueEnd = new AnimatedFloat(mold.blueEnd);
+        blueEndVariance = new AnimatedFloat(mold.blueEndVariance);
+		
+		alphaStart = new AnimatedFloat(mold.alphaStart);
         alphaStartVariance = new AnimatedFloat(mold.alphaStartVariance);
+		redStart = new AnimatedFloat(mold.redStart);
+        redStartVariance = new AnimatedFloat(mold.redStartVariance);
+		greenStart = new AnimatedFloat(mold.greenStart);
+        greenStartVariance = new AnimatedFloat(mold.greenStartVariance);
+		blueStart = new AnimatedFloat(mold.blueStart);
+        blueStartVariance = new AnimatedFloat(mold.blueStartVariance);
+		
         angle = new AnimatedFloat(mold.angle);
         angleVariance = new AnimatedFloat(mold.angleVariance);
         duration = mold.duration;
@@ -144,10 +176,24 @@ class EmitterSprite extends Sprite
         super.onUpdate(dt);
 
         alphaEnd.update(dt);
+        redEnd.update(dt);
+		greenEnd.update(dt);
+		blueEnd.update(dt);
         alphaEndVariance.update(dt);
+        redEndVariance.update(dt);
+		greenEndVariance.update(dt);
+		blueEndVariance.update(dt);
+		
         alphaStart.update(dt);
+		redStart.update(dt);
+		greenStart.update(dt);
+		blueStart.update(dt);
         alphaStartVariance.update(dt);
-        angle.update(dt);
+		redStartVariance.update(dt);
+		greenStartVariance.update(dt);
+		blueStartVariance.update(dt);
+        
+		angle.update(dt);
         angleVariance.update(dt);
         emitX.update(dt);
         emitXVariance.update(dt);
@@ -227,6 +273,9 @@ class EmitterSprite extends Sprite
                 particle.scale += particle.velScale * dt;
                 particle.rotation += particle.velRotation * dt;
                 particle.alpha += particle.velAlpha * dt;
+                particle.tintR += particle.velRed * dt;
+                particle.tintG += particle.velGreen * dt;
+                particle.tintB += particle.velBlue * dt;
 
                 particle.life -= dt;
                 ++ii;
@@ -287,6 +336,9 @@ class EmitterSprite extends Sprite
             if (particle.scale != 1) {
                 g.scale(particle.scale, particle.scale);
             }
+			if (particle.tintR != 0 || particle.tintG != 0 || particle.tintB != 0) {
+                g.setTint(particle.tintR, particle.tintG, particle.tintB);
+            }
             g.drawTexture(texture, offset, offset);
             g.restore();
 
@@ -345,6 +397,21 @@ class EmitterSprite extends Sprite
         particle.alpha = alphaStart;
         particle.velAlpha = (alphaEnd-alphaStart) / particle.life;
 
+		var redStart = random(redStart._, redStartVariance._);
+        var redEnd = random(redEnd._, redEndVariance._);
+        particle.tintR = redStart;
+        particle.velRed = (redEnd-redStart) / particle.life;
+		
+		var greenStart = random(greenStart._, greenStartVariance._);
+        var greenEnd = random(greenEnd._, greenEndVariance._);
+        particle.tintG = greenStart;
+        particle.velGreen = (greenEnd-greenStart) / particle.life;
+		
+		var blueStart = random(blueStart._, blueStartVariance._);
+        var blueEnd = random(blueEnd._, blueEndVariance._);
+        particle.tintB = blueStart;
+        particle.velBlue = (blueEnd-blueStart) / particle.life;
+		
         return true;
     }
 
@@ -418,6 +485,13 @@ private class Particle
     public var velAlpha :Float = 0;
 
     public var life :Float = 0;
+	
+	public var tintR:Float = 0;
+	public var tintG:Float = 0;
+	public var tintB:Float = 0;
+	public var velRed:Float = 0;
+	public var velGreen:Float = 0;
+	public var velBlue:Float = 0;
 
     public function new () {}
 }
