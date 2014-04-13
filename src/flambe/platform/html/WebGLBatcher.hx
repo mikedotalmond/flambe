@@ -40,6 +40,7 @@ class WebGLBatcher
         _drawTextureShader = new DrawTextureGL(gl);
         _drawTextureWithTintShader = new DrawTextureWithTintGL(gl);
         _drawPatternShader = new DrawPatternGL(gl);
+        _drawTintedPatternShader = new DrawTintedPatternGL(gl);
         _fillRectShader = new FillRectGL(gl);
 
         resize(16);
@@ -138,6 +139,16 @@ class WebGLBatcher
         }
         return prepareQuad(5, renderTarget, blendMode, scissor, _drawPatternShader);
     }
+	
+	public function prepareDrawTintedPattern (renderTarget :WebGLTextureRoot,
+        blendMode :BlendMode, scissor :Rectangle, texture :WebGLTexture) :Int
+	{
+        if (texture != _lastTexture) {
+            flush();
+            _lastTexture = texture;
+        }
+        return prepareQuad(8, renderTarget, blendMode, scissor, _drawTintedPatternShader);
+    }
 
     public function prepareFillRect (renderTarget :WebGLTextureRoot,
         blendMode :BlendMode, scissor :Rectangle) :Int
@@ -223,10 +234,10 @@ class WebGLBatcher
             _currentShader = _lastShader;
         }
 
-        if (_lastShader == _drawPatternShader) {
-            var texture = _lastTexture;
+        if (_lastShader == _drawPatternShader || _lastShader == _drawTintedPatternShader) {
+			var texture = _lastTexture;
             var root = texture.root;
-            _drawPatternShader.setRegion(
+			(cast _lastShader).setRegion(
                 texture.rootX / root.width,
                 texture.rootY / root.height,
                 texture.width / root.width,
@@ -306,6 +317,7 @@ class WebGLBatcher
     private var _drawTextureShader :DrawTextureGL;
     private var _drawTextureWithTintShader :DrawTextureWithTintGL;
     private var _drawPatternShader :DrawPatternGL;
+    private var _drawTintedPatternShader :DrawTintedPatternGL;
     private var _fillRectShader :FillRectGL;
 
     private var _quads :Int = 0;

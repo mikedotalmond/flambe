@@ -33,3 +33,40 @@ class DrawPattern extends Shader
         }
     }
 }
+
+
+/**
+ * Shader that draws textured triangles with a given alpha and rgb tint (multipliers)
+ * Requries 8 Floats/Vertex
+ */
+@:final class DrawPatternWithTint extends Shader {
+	
+    static var SRC = {
+		
+        var input: {
+            pos 	:Float2,
+            uv 		:Float2,
+            alpha 	:Float,
+			tint	:Float3,
+        };
+
+        var _uv 	:Float2;
+        var _alpha 	:Float;
+        var _tint	:Float3;
+
+        function vertex () {
+            _uv 	= input.uv;
+            _alpha 	= input.alpha;
+            _tint	= input.tint;
+            out 	= input.pos.xyzw;
+        }
+		
+        function fragment (texture :Texture, region:Float4) {
+			
+			var temp 	= texture.get(region.zw + _uv%region.xy, clamp);
+			temp.xyz 	*= _tint;
+			
+            out 		= temp * _alpha;
+        }
+    }
+}

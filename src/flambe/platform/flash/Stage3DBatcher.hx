@@ -32,6 +32,7 @@ class Stage3DBatcher
         _drawTextureShader = new DrawTexture();
         _drawTextureWithTintShader = new DrawTextureWithTint();
         _drawPatternShader = new DrawPattern();
+        _drawPatternWithTintShader = new DrawPatternWithTint();
         _fillRectShader = new FillRect();
 
         _scratchScissor = new Rectangle();
@@ -213,6 +214,18 @@ class Stage3DBatcher
         }
         return prepareQuad(5, renderTarget, blendMode, scissor, _drawPatternShader);
     }
+	
+	public function prepareDrawTintedPattern (renderTarget :Stage3DTextureRoot,
+        blendMode :BlendMode, scissor :Rectangle, texture :Stage3DTexture) :Int
+    {
+        if (texture != _lastTexture) {
+            flush();
+            _lastTexture = texture;
+        }
+        return prepareQuad(8, renderTarget, blendMode, scissor, _drawPatternWithTintShader);
+    }
+	
+	
 
     /** Adds a quad to the batch, using the FillRect shader. */
     public function prepareFillRect (renderTarget :Stage3DTextureRoot,
@@ -298,17 +311,11 @@ class Stage3DBatcher
 
         var vertexBuffer = null;
         // TODO(bruno): Optimize with switch/case?
-        if (_lastShader == _drawTextureShader) {
-            _drawTextureShader.texture = _lastTexture.root.nativeTexture;
-            _drawTextureShader.rebuildVars();
-            vertexBuffer = _vertexBuffer5;
-
-		} else if (_lastShader == _drawTextureWithTintShader) {
-			_drawTextureWithTintShader.texture = _lastTexture.root.nativeTexture;
-            _drawTextureWithTintShader.rebuildVars();
-            vertexBuffer = _vertexBuffer8;
-
-        } else if (_lastShader == _drawPatternShader) {
+        if (_lastShader == _drawTextureShader || _lastShader == _drawTextureWithTintShader) {
+            _drawTextureWithTintShader.texture = _drawTextureShader.texture = _lastTexture.root.nativeTexture;
+            _lastShader.rebuildVars(); 
+			vertexBuffer = (_lastShader == _drawTextureWithTintShader) ? _vertexBuffer8 : _vertexBuffer5;
+		} else if (_lastShader == _drawPatternShader || _lastShader == _drawPatternWithTintShader) {
             var region = _scratchVector3D;
             var texture = _lastTexture;
             var root = texture.root;
@@ -316,15 +323,14 @@ class Stage3DBatcher
             region.w = texture.rootY / root.height; // y
             region.x = texture.width / root.width; // width
             region.y = texture.height / root.height; // height
-            _drawPatternShader.texture = root.nativeTexture;
-            _drawPatternShader.region = region;
-            _drawPatternShader.rebuildVars();
-            vertexBuffer = _vertexBuffer5;
-
+            _drawPatternShader.texture = _drawPatternWithTintShader.texture = root.nativeTexture;
+            _drawPatternShader.region = _drawPatternWithTintShader.region = region;
+            _lastShader.rebuildVars();
+			vertexBuffer = (_lastShader == _drawPatternWithTintShader) ? _vertexBuffer8 : _vertexBuffer5;
         } else if (_lastShader == _fillRectShader) {
             vertexBuffer = _vertexBuffer6;
         }
-
+		
         // vertexBuffer.uploadFromVector(data, 0, _quads<<2);
         vertexBuffer.uploadFromVector(data, 0, _maxQuads<<2);
         _lastShader.bind(_context3D, vertexBuffer);
@@ -405,6 +411,7 @@ class Stage3DBatcher
     private var _drawTextureShader :DrawTexture;
     private var _drawTextureWithTintShader :DrawTextureWithTint;
     private var _drawPatternShader :DrawPattern;
+    private var _drawPatternWithTintShader :DrawPatternWithTint;
     private var _fillRectShader :FillRect;
 
     private var _quadIndexBuffer :IndexBuffer3D;

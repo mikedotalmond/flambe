@@ -175,8 +175,11 @@ class WebGLGraphics
         var u2 = width / root.width;
         var v2 = height / root.height;
         var alpha = state.alpha;
+		var tintR = state.tintR;
+		var tintG = state.tintG;
+		var tintB = state.tintB;
 
-        var offset = _batcher.prepareDrawPattern(_renderTarget, state.blendMode, state.scissor, texture);
+        var offset = _batcher.prepareDrawTintedPattern(_renderTarget, state.blendMode, state.scissor, texture);
         var data = _batcher.data;
 
         data[  offset] = pos[0];
@@ -184,24 +187,36 @@ class WebGLGraphics
         data[++offset] = 0;
         data[++offset] = 0;
         data[++offset] = alpha;
+        data[++offset] = tintR;
+        data[++offset] = tintG;
+      	data[++offset] = tintB;
 
         data[++offset] = pos[2];
         data[++offset] = pos[3];
         data[++offset] = u2;
         data[++offset] = 0;
         data[++offset] = alpha;
+        data[++offset] = tintR;
+        data[++offset] = tintG;
+      	data[++offset] = tintB;
 
         data[++offset] = pos[4];
         data[++offset] = pos[5];
         data[++offset] = u2;
         data[++offset] = v2;
         data[++offset] = alpha;
+        data[++offset] = tintR;
+        data[++offset] = tintG;
+      	data[++offset] = tintB;
 
         data[++offset] = pos[6];
         data[++offset] = pos[7];
         data[++offset] = 0;
         data[++offset] = v2;
         data[++offset] = alpha;
+        data[++offset] = tintR;
+        data[++offset] = tintG;
+      	data[++offset] = tintB;
     }
 
     public function fillRect (color :Int, x :Float, y :Float, width :Float, height :Float)
