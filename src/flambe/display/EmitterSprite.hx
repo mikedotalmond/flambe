@@ -336,9 +336,8 @@ class EmitterSprite extends Sprite
             if (particle.scale != 1) {
                 g.scale(particle.scale, particle.scale);
             }
-			if (particle.tintR != 0 || particle.tintG != 0 || particle.tintB != 0) {
-                g.setTint(particle.tintR, particle.tintG, particle.tintB);
-            }
+			
+			g.setTint(particle.tintR, particle.tintG, particle.tintB);
             g.drawTexture(texture, offset, offset);
             g.restore();
 
