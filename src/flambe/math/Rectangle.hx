@@ -74,6 +74,34 @@ class Rectangle
     }
 
     /**
+     * Returns whether this rectangle intersects another rectangle.
+     *
+     * @param rect The other rectangle to check for intersection.
+     * @param result If supplied and the rectangles intersect, will be set to the calculated
+     *   intersection rectangle.
+     */
+    public function intersects (rect :Rectangle, ?result: Rectangle) :Bool
+    {
+        var left = FMath.max(x, rect.x);
+        var right = FMath.max(x+width, rect.x+rect.width);
+        if (left > right) {
+            return false;
+        }
+
+        var top = FMath.max(y, rect.y);
+        var bottom = FMath.max(y+height, rect.y+rect.height);
+        if (top > bottom) {
+            return false;
+        }
+
+        if (result != null) {
+            result.set(left, top, right-left, bottom-top);
+        }
+        return true;
+    }
+
+
+    /**
      * Creates a copy of this rectangle.
      */
     public function clone (?result :Rectangle) :Rectangle
