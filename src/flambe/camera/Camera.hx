@@ -1,9 +1,8 @@
 package flambe.camera;
 
 import flambe.camera.behaviours.CameraControlBehaviour;
-import flambe.camera.behaviours.TouchControlBehaviour;
 import flambe.camera.behaviours.MouseControlBehaviour;
-import flambe.camera.behaviours.TouchControlBehaviour;
+
 import flambe.math.Rectangle;
 import flambe.util.SignalConnection;
 
