@@ -90,11 +90,6 @@ class NapeHelpers {
 	public static function createCircle(type:BodyType, x:Float, y:Float, r:Float):Body {
 		var b = new Body(type);
         b.shapes.add(new Circle(r));
-
-        var pivot:Vec2 = b.localCOM.mul(-1);
-        b.translateShapes(pivot);
-        b.userData.graphicOffset = pivot;
-
 		b.position.setxy(x, y);
 		return b;
 	}
