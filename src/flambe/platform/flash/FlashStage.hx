@@ -111,7 +111,7 @@ class FlashStage
 
     public function requestFullscreen (enable :Bool = true)
     {
-        // Use FULL_SCREEN_INTERACTIVE instead?
+        // Use FULL_SCREEN_INTERACTIVE instead? (needed for keyboard access/use - a compile time flag perhaps? the swf embed params will need changing to allow this)
         try {
             nativeStage.displayState = enable ? FULL_SCREEN : NORMAL;
         } catch (error :Dynamic) {

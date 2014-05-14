@@ -129,13 +129,14 @@ class HtmlPlatform
 
         // Detect touch support. See http://modernizr.github.com/Modernizr/touch.html for more
         // sophisticated detection methods, but this seems to cover all important browsers
-        var standardTouch :Bool = untyped __js__("typeof")(Browser.window.ontouchstart) != "undefined";
-
+        var standardTouch :Bool = untyped __js__("typeof")(Browser.window.ontouchstart) != "undefined"; 
+		// doesn't work as expected on firefox - which returns null, and not undefined...
+		
         // The pointer event handles mouse movement, touch events, and stylus events.
         // We check to see if multiple points are supported indicating true touch support.
         // http://blogs.msdn.com/b/ie/archive/2011/10/19/handling-multi-touch-and-mouse-input-in-all-browsers.aspx
         var msTouch :Bool = untyped __js__("'msMaxTouchPoints' in window.navigator && (window.navigator.msMaxTouchPoints > 1)");
-
+		
         if (standardTouch || msTouch) {
             var basicTouch = new BasicTouch(_pointer, standardTouch ?
                 4 : (untyped Browser.navigator).msMaxTouchPoints);
