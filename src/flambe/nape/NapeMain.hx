@@ -56,6 +56,9 @@ class NapeMain {
 	
 	public var gestureControl	(default, null):GestureControl;
 	
+	public var stageWidth		(default, null):Int;
+	public var stageHeight		(default, null):Int;
+	
 	
 	function new(worldBounds:Rectangle = null) {	
 		this.worldBounds = worldBounds;
@@ -65,12 +68,17 @@ class NapeMain {
 	// Assets ready...
     function onSuccess(assetPack:AssetPack) {
 		
-		this.assets = assetPack;
+		this.assets 	= assetPack;
+		stageWidth 		= System.stage.width;
+		stageHeight 	= System.stage.height;
 		
 		System.root.addChild(world = new Entity()); // game world with camera, physics, etc...
 		
 		System.root.addChild(ui = new Entity()); // non-game, no camera, on top of everything (HUD)
 		ui.add(uiContainer = new Sprite());
+		
+		stageWidth  = System.stage.width;
+		stageHeight = System.stage.height;
 		
 		// world display
 		worldContainer 		= new Sprite();
@@ -88,6 +96,9 @@ class NapeMain {
 			.addChild(worldNapeLayer)			
 			//  in-camera	fg/ui
 			.addChild(worldUILayer);			
+		
+		//
+		setupScenery();
 		
 		//
 		setupNapeWorld();
@@ -121,6 +132,11 @@ class NapeMain {
 	// -----------------------------------------------------------------------------------------
 	
 	
+	function setupScenery() {
+		
+	}
+	
+	
 	function setupNapeWorld() {
 		worldNapeLayer
 			.add(spaceComponent = new SpaceComponent(assets, worldBounds))
@@ -142,7 +158,8 @@ class NapeMain {
 	
 		
 	function onResize() {
-		
+		stageWidth  = System.stage.width;
+		stageHeight = System.stage.height;
 	}
 	
 	

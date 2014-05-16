@@ -22,7 +22,7 @@ class LocalGravity extends Component {
 	
 	override public function onAdded() {
 		
-		var space:Space = owner.get(SpaceComponent).space;
+		var space:Space = owner.get(SpaceComponent).napeSpace;
 		
 		if(System.motion.accelerationSupported){
 			System.motion.accelerationIncludingGravity.connect(function(acc:Acceleration) {
