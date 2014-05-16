@@ -44,7 +44,7 @@ import nape.space.Space;
 	override public function onAdded() {
 		
 		if (spaceComponent 	== null) spaceComponent = owner.get(SpaceComponent);
-		if (space 			== null) space 			= spaceComponent.space;
+		if (space 			== null) space 			= spaceComponent.napeSpace;
 		if (rootSprite 		== null) rootSprite 	= owner.get(Sprite);
 		
 		this.camera 			= (rootSprite == null) ? null : rootSprite.owner.get(Camera);
@@ -55,7 +55,7 @@ import nape.space.Space;
 			downConnection 	= System.pointer.down.connect(onPointerDown);
 			upConnection	= System.pointer.up.connect(onPointerUp);
 		} else {
-			// no pointer
+			// no pointer?
 		}
 	}
 

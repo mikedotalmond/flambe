@@ -51,7 +51,7 @@ class BodyComponent extends Component {
     }
 
 	override public function onAdded() {
-		space		= world.get(SpaceComponent).space;
+		space		= world.get(SpaceComponent).napeSpace;
 		sprite 		= owner.get(Sprite);
 		body.space 	= space;
 	}
