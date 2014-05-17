@@ -24,7 +24,9 @@ import nape.space.Space;
 	var mousePoint		:Point;	 	
 
 	var handJoint		:PivotJoint;
-	var maxForce		:Float;
+	
+	var _maxForce:Float;
+	public var maxForce(get, set):Float;
 
 	var downConnection	:SignalConnection;
 	var upConnection	:SignalConnection;
@@ -66,7 +68,7 @@ import nape.space.Space;
         handJoint.active 	= false;
 		handJoint.stiff 	= false;
 		
-		handJoint.maxForce 	= maxForce;
+		handJoint.maxForce 	= _maxForce;
 		handJoint.damping 	= 10;
 		handJoint.frequency = 10;
 	}
@@ -107,4 +109,10 @@ import nape.space.Space;
         handJoint.space = null;
 		handJoint = null;
     }
+	
+	inline function get_maxForce():Float return _maxForce;
+	inline function set_maxForce(value:Float):Float {
+		if (handJoint != null) handJoint.maxForce = value;
+		return _maxForce = value;
+	}
 }
