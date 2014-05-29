@@ -28,10 +28,9 @@ import nape.space.Space;
  */
 class SpaceComponent extends Component {
 	
-	
-	static inline var FixedTimeStep					:Float	= 1.0 / 60.0;
-	static inline var PositionIterationsPerTimeStep	:Int 	= 10;
-	static inline var VelocityIterationsPerTimeStep	:Int 	= 10;
+	static public var FixedTimeStep					:Float	= 1.0 / 60.0;
+	static public var PositionIterationsPerTimeStep	:Int 	= 10;
+	static public var VelocityIterationsPerTimeStep	:Int 	= 10;
 	
 	var cumalativeDt						:Float;
 	
