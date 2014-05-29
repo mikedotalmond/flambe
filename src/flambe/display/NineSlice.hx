@@ -101,8 +101,8 @@ class NineSlice extends Component {
 		// scale centre top,middle,and bottom slices
 		parts[0].scaleX._ = parts[1].scaleX._ = parts[2].scaleX._ = scale;
 		
-		// position right top,middle,and bottom
-		parts[3].x._ = parts[4].x._ = parts[5].x._ = _x + w - minWidth;
+		// right
+		parts[3].x._ = parts[4].x._ = parts[5].x._ = _x + w - xOffset - 1;
 		
 		return _width = w;
 	}
@@ -117,8 +117,8 @@ class NineSlice extends Component {
 		// scale middle left,centre,and right slices
 		parts[1].scaleY._ = parts[4].scaleY._ = parts[7].scaleY._ = scale;
 		
-		// position bottom left,centre,and right
-		parts[2].y._ = parts[5].y._ = parts[8].y._ = _y + h - minHeight;
+		// bottom
+		parts[2].y._ = parts[5].y._ = parts[8].y._ = _y + h - yOffset - 1;
 		
 		return _height = h;
 	}
