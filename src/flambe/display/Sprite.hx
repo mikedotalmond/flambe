@@ -146,10 +146,16 @@ class Sprite extends Component
 	public var tintR(default, null):AnimatedFloat;
 	public var tintG(default, null):AnimatedFloat;
 	public var tintB(default, null):AnimatedFloat;
-	public function setTint(r:Float, g:Float, b:Float):Sprite {
-		tintR._ = r;
-		tintG._ = g;
-		tintB._ = b;
+	public function setTint(r:Float, g:Float, b:Float, durtaion:Float=0):Sprite {
+		if (durtaion == 0) {
+			tintR._ = r;
+			tintG._ = g;
+			tintB._ = b;
+		} else {
+			tintR.animateTo(r, durtaion);
+			tintG.animateTo(g, durtaion);
+			tintB.animateTo(b, durtaion);
+		}
 		return this;
 	}
 
