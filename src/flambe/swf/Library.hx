@@ -7,6 +7,7 @@ package flambe.swf;
 import haxe.Json;
 
 import flambe.asset.AssetPack;
+import flambe.asset.File;
 import flambe.display.Sprite;
 import flambe.swf.Format;
 import flambe.util.Assert;
@@ -29,10 +30,10 @@ class Library
      */
     public function new (pack :AssetPack, baseDir :String)
     {
+        _file = pack.getFile(baseDir+"/library.json");
+        var json :Format = Json.parse(_file.toString());
+
         _symbols = new Map();
-
-        var json :Format = Json.parse(pack.getFile(baseDir + "/library.json").toString());
-
         frameRate = json.frameRate;
 
         var movies = [];
@@ -106,6 +107,7 @@ class Library
         var lib = Type.createEmptyInstance(Library);
         lib._symbols = new Map();
         lib.frameRate = 60;
+        lib._file = null;
 
         for (flipbook in flipbooks) {
             // Fake up some Flump metadata to create a movie symbol
@@ -136,6 +138,20 @@ class Library
         }
 
         return lib;
+    }
+
+    /**
+     * Disposes the source library.json File used to create this Library. This can free up some
+     * memory, if you don't intend to recreate this Library later from the same AssetPack.
+     *
+     * @returns This instance, for chaining.
+     */
+    public function disposeFiles () :Library
+    {
+        if (_file != null) {
+            _file.dispose();
+        }
+        return this;
     }
 
     /**
@@ -179,5 +195,6 @@ class Library
         return _symbols.iterator();
     }
 
+    private var _file :File;
     private var _symbols :Map<String,Symbol>;
 }
