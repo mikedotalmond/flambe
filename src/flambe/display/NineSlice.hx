@@ -37,7 +37,7 @@ class NineSlice extends Component {
 	 * @param	yOffset
 	 * @return
 	 */
-	public static function fromSubTexture(t:SubTexture, xOffset:Int=0, yOffset:Int=0):NineSlice {
+	public static function fromSubTexture(t:SubTexture, xOffset:Int=0, yOffset:Int=0, width:Float=0, height:Float=0):NineSlice {
 			
 		if (xOffset < 1) xOffset = Math.round(t.width / 2);
 		if (yOffset < 1) yOffset = Math.round(t.height / 2);
@@ -47,7 +47,7 @@ class NineSlice extends Component {
 		
 		var parentTexture = t.parent;
 		
-		return new NineSlice([
+		var nineSlice:NineSlice = new NineSlice([
 			new ImageSprite(parentTexture.subTexture(t.x + xMid, t.y, 1, yOffset)), //topMid
 			new ImageSprite(parentTexture.subTexture(t.x + xMid, t.y + yMid, 1, 1)), //midMid
 			new ImageSprite(parentTexture.subTexture(t.x + xMid, t.y + t.height - yOffset, 1, yOffset)),//bottomMid
@@ -60,6 +60,10 @@ class NineSlice extends Component {
 			new ImageSprite(parentTexture.subTexture(t.x, t.y + yMid, xOffset, 1)),//leftMid
 			new ImageSprite(parentTexture.subTexture(t.x, t.y + t.height - yOffset, xOffset, yOffset)),//leftBottom
 		]);
+		
+		if (width > 0) nineSlice.width = width;
+		if (height > 0) nineSlice.height = height;
+		return nineSlice;
 	}
 	
 	
@@ -92,8 +96,8 @@ class NineSlice extends Component {
 	
 	
 	var _width:Float = 0;
-	function get_width() return _width;
-	function set_width(value) {
+	function get_width():Float return _width;
+	function set_width(value:Float) {
 		
 		var w 		= (value < minWidth) ? minWidth : value;
 		var scale 	= w - minWidth;
