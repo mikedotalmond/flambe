@@ -5,6 +5,7 @@
 package flambe.display;
 
 import flambe.animation.AnimatedFloat;
+import flambe.animation.Ease;
 import flambe.display.Sprite;
 import flambe.input.PointerEvent;
 import flambe.math.FMath;
@@ -146,15 +147,15 @@ class Sprite extends Component
 	public var tintR(default, null):AnimatedFloat;
 	public var tintG(default, null):AnimatedFloat;
 	public var tintB(default, null):AnimatedFloat;
-	public function setTint(r:Float, g:Float, b:Float, durtaion:Float=0):Sprite {
-		if (durtaion == 0) {
+	public function setTint(r:Float, g:Float, b:Float, durtaion:Float=0, ease:EaseFunction=null):Sprite {
+		if (durtaion <= 0) {
 			tintR._ = r;
 			tintG._ = g;
 			tintB._ = b;
 		} else {
-			tintR.animateTo(r, durtaion);
-			tintG.animateTo(g, durtaion);
-			tintB.animateTo(b, durtaion);
+			tintR.animateTo(r, durtaion, ease);
+			tintG.animateTo(g, durtaion, ease);
+			tintB.animateTo(b, durtaion, ease);
 		}
 		return this;
 	}
