@@ -86,7 +86,7 @@ class NineSlice extends Component {
 	
 	
 	override public function onAdded() {
-		for (part in parts) owner.addChild(new Entity().add(part));
+		for (part in parts) owner.addChild(new Entity().add(part.disablePointer()));
 	}
 	
 	

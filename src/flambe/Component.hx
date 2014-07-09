@@ -17,10 +17,12 @@ class Component
     implements Disposable
 {
     /** The entity this component is attached to, or null. */
-    public var owner (default, null) :Entity;
+    @:allow(flambe)
+    public var owner (default, null) :Entity = null;
 
     /** The owner's next component, for iteration. */
-    public var next (default, null) :Component;
+    @:allow(flambe)
+    public var next (default, null) :Component = null;
 
     /**
      * The component's name, generated based on its class. Components with the same name replace
@@ -39,6 +41,26 @@ class Component
      * Called just before this component has been removed from its entity.
      */
     public function onRemoved ()
+    {
+    }
+
+    /**
+     * Called just before this component's first update after being added. This is the best place to
+     * put initialization logic that requires accessing other components/entities, since it waits
+     * until the rest of the entity hierarchy is accessible.
+     *
+     * Note that onStart may be delayed until the next frame after adding a component, depending on
+     * where in the update step it was added.
+     */
+    public function onStart ()
+    {
+    }
+
+    /**
+     * Called just before this component will be removed from its entity, if onStart was previously
+     * called.
+     */
+    public function onStop ()
     {
     }
 
@@ -65,14 +87,9 @@ class Component
         return null; // Subclasses will automagically implement this
     }
 
-    @:allow(flambe) function init (owner :Entity, next :Component)
-    {
-        this.owner = owner;
-        this.next = next;
-    }
+    // Component flags
+    @:allow(flambe) static inline var STARTED = 1 << 0;
+    private static inline var NEXT_FLAG = 1 << 1; // Must be last!
 
-    @:allow(flambe) inline function setNext (next :Component)
-    {
-        this.next = next;
-    }
+    @:allow(flambe) var _flags :Int = 0;
 }

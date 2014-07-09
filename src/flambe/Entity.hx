@@ -7,12 +7,14 @@ package flambe;
 #if macro
 import haxe.macro.Context;
 import haxe.macro.Expr;
+import haxe.macro.Type;
 using haxe.macro.ExprTools;
 #end
 
 import flambe.util.Disposable;
 
 using Lambda;
+using flambe.util.BitSets;
 
 /**
  * A node in the entity hierarchy, and a collection of components.
@@ -82,12 +84,13 @@ using Lambda;
             p = p.next;
         }
         if (tail != null) {
-            tail.setNext(component);
+            tail.next = component;
         } else {
             firstComponent = component;
         }
 
-        component.init(this, null);
+        component.owner = this;
+        component.next = null;
         component.onAdded();
 
         return this;
@@ -107,7 +110,8 @@ using Lambda;
                 if (prev == null) {
                     firstComponent = next;
                 } else {
-                    prev.init(this, next);
+                    prev.owner = this;
+                    prev.next = next;
                 }
 
                 // Remove it from the _compMap
@@ -118,8 +122,13 @@ using Lambda;
 #end
 
                 // Notify the component it was removed
+                if (p._flags.contains(Component.STARTED)) {
+                    p.onStop();
+                    p._flags = p._flags.remove(Component.STARTED);
+                }
                 p.onRemoved();
-                p.init(null, null);
+                p.owner = null;
+                p.next = null;
                 return true;
             }
             prev = p;
@@ -135,41 +144,14 @@ using Lambda;
     public function get<A:Component> (componentClass :Class<A>) :A return null;
 
 #else
-    macro public function get<A> (self :Expr, componentClass :ExprOf<Class<A>>) :ExprOf<A>
+    macro public function get<A:Component> (self :Expr, componentClass :ExprOf<Class<A>>) :ExprOf<A>
     {
-        var path = getClassPathFromExpr(componentClass);
-        if (path != null)
-        {
-            var type = Context.getType(path.join("."));
-
-            if (Context.unify(type, Context.getType("flambe.Component"))) {
-                // Delegate through getComponentTyped to avoid a (slow) typed cast
-                return macro $self._internal_getComponentTyped($componentClass.NAME, $componentClass);
-            }            
-        }
-
-        Context.error("Expected a class that extends Component, got " + componentClass.toString(),
-            Context.currentPos());
-        return null;
+        var type = requireComponentType(componentClass);
+        var name = macro $componentClass.NAME;
+        return needSafeCast(type)
+            ? macro Std.instance($self.getComponent($name), $componentClass)
+            : macro $self._internal_unsafeCast($self.getComponent($name), $componentClass);
     }
-
-#if macro
-    static function getClassPathFromExpr<A> (componentClass :ExprOf<Class<A>>) :Array<String>
-    {
-        switch (componentClass.expr) {
-        case EConst(CIdent(name)):
-            return [name];
-        case EField(e, name):
-            var path = getClassPathFromExpr(e);
-            if (path != null)
-                path.push(name);
-            return path;
-        default:
-            return null;
-        }
-    }
-#end
-
 #end
 
     /**
@@ -182,6 +164,42 @@ using Lambda;
     macro public function has<A> (self :Expr, componentClass :ExprOf<Class<A>>) :ExprOf<Bool>
     {
         return macro $self.get($componentClass) != null;
+    }
+#end
+
+    /**
+     * Gets a component of a given type from this entity, or any of its parents. Searches upwards in
+     * the hierarchy until the component is found, or returns null if not found.
+     */
+#if (display || dox)
+    public function getFromParents<A:Component> (componentClass :Class<A>) :A return null;
+
+#else
+    macro public function getFromParents<A> (self :Expr, componentClass :ExprOf<Class<A>>) :ExprOf<A>
+    {
+        var type = requireComponentType(componentClass);
+        var name = macro $componentClass.NAME;
+        return needSafeCast(type)
+            ? macro $self._internal_getFromParents($name, $componentClass)
+            : macro $self._internal_unsafeCast($self._internal_getFromParents($name), $componentClass);
+    }
+#end
+
+    /**
+     * Gets a component of a given type from this entity, or any of its children. Searches downwards
+     * in a depth-first search until the component is found, or returns null if not found.
+     */
+#if (display || dox)
+    public function getFromChildren<A:Component> (componentClass :Class<A>) :A return null;
+
+#else
+    macro public function getFromChildren<A> (self :Expr, componentClass :ExprOf<Class<A>>) :ExprOf<A>
+    {
+        var type = requireComponentType(componentClass);
+        var name = macro $componentClass.NAME;
+        return needSafeCast(type)
+            ? macro $self._internal_getFromChildren($name, $componentClass)
+            : macro $self._internal_unsafeCast($self._internal_getFromChildren($name), $componentClass);
     }
 #end
 
@@ -308,12 +326,97 @@ using Lambda;
         return output;
     }
 
-    // A semi-private helper method used by Entity.get()
+    // Semi-private helper methods
 #if !display
     @:extern // Inline even in debug builds
-    inline public function _internal_getComponentTyped<A:Component> (name :String, cl :Class<A>) :A
+    inline public function _internal_unsafeCast<A:Component> (component :Component, cl :Class<A>) :A
     {
-        return cast getComponent(name);
+        return cast component;
+    }
+
+    public function _internal_getFromParents<A:Component> (name :String, ?safeCast :Class<A>) :A
+    {
+        var entity = this;
+        do {
+            var component = entity.getComponent(name);
+            if (safeCast != null) {
+                component = Std.instance(component, safeCast);
+            }
+            if (component != null) {
+                return cast component;
+            }
+            entity = entity.parent;
+        } while (entity != null);
+
+        return null; // Not found
+    }
+
+    public function _internal_getFromChildren<A:Component> (name :String, ?safeCast :Class<A>) :A
+    {
+        var component = getComponent(name);
+        if (safeCast != null) {
+            component = Std.instance(component, safeCast);
+        }
+        if (component != null) {
+            return cast component;
+        }
+
+        var child = firstChild;
+        while (child != null) {
+            var component = child._internal_getFromChildren(name, safeCast);
+            if (component != null) {
+                return component;
+            }
+
+            child = child.next;
+        }
+
+        return null; // Not found
+    }
+#end
+
+#if macro
+    // Gets the ClassType from an expression, or aborts if it's not a component class
+    private static function requireComponentType (componentClass :Expr) :ClassType
+    {
+        var path = getClassName(componentClass);
+        if (path != null) {
+            var type = Context.getType(path.join("."));
+            switch (type) {
+            case TInst(ref,_):
+                var cl = ref.get();
+                if (Context.unify(type, Context.getType("flambe.Component")) && cl.superClass != null) {
+                    return cl;
+                }
+            default:
+            }
+        }
+
+        Context.error("Expected a class that extends Component, got " + componentClass.toString(),
+            componentClass.pos);
+        return null;
+    }
+
+    // Gets a class name from a given expression
+    private static function getClassName<A> (componentClass :Expr) :Array<String>
+    {
+        switch (componentClass.expr) {
+        case EConst(CIdent(name)):
+            return [name];
+        case EField(expr, name):
+            var path = getClassName(expr);
+            if (path != null) {
+                path.push(name);
+            }
+            return path;
+        default:
+            return null;
+        }
+    }
+
+    private static function needSafeCast (componentClass :ClassType) :Bool
+    {
+        return !componentClass.superClass.t.get().meta.has(":componentBase");
     }
 #end
 
