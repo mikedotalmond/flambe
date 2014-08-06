@@ -12,8 +12,8 @@ import flambe.display.Sprite;
 	var _target			:Entity = null;	
 	var _targetSprite	:Sprite = null;	
 	
-	var xEaseTime		:Float = .25;
-	var yEaseTime		:Float = .25;
+	public var xEaseTime		:Float = .25;
+	public var yEaseTime		:Float = .25;
 	
 	public var target			(get, set)		:Entity;	
 	public var targetSprite		(get, never)	:Sprite;

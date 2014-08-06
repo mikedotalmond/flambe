@@ -124,7 +124,7 @@ class NapeMain {
 		#end
 		
 		#if (flash && debug)
-		System.root.add(new flambe.nape.NapeDebugView(spaceComponent.space, camera));
+		System.root.add(new flambe.nape.NapeDebugView(spaceComponent.napeSpace, camera));
 		#end
     }
 	

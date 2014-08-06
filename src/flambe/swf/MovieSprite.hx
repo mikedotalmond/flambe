@@ -5,6 +5,7 @@
 package flambe.swf;
 
 import flambe.animation.AnimatedFloat;
+import flambe.animation.Ease.EaseFunction;
 import flambe.display.Sprite;
 import flambe.math.FMath;
 import flambe.swf.MovieSymbol;
@@ -177,11 +178,10 @@ class MovieSprite extends Sprite
 
 	
 	// tint the children!
-	override public function setTint(r:Float, g:Float, b:Float, duration:Float=0):Sprite {
-		//super.setTint(r, g, b);
+	override public function setTint(r:Float, g:Float, b:Float, duration:Float=0, ease:EaseFunction=null):Sprite {
 		for (ani in _animators) {
 			var spr = ani.content.get(Sprite);
-			if (spr != null) spr.setTint(r, g, b);
+			if (spr != null) spr.setTint(r, g, b, duration, ease);
 		}
 		return this;
 	}
