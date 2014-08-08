@@ -6,7 +6,6 @@ package flambe.nape;
  */
 
 import flambe.animation.Ease;
-
 import flambe.asset.AssetPack;
 import flambe.asset.Manifest;
 
@@ -177,6 +176,14 @@ class NapeMain {
 			
 			case Key.NumpadAdd		: camera.controller.zoom.animateBy(.2, .25, Ease.quadOut);
 			case Key.NumpadSubtract	: camera.controller.zoom.animateBy(-.2, .25, Ease.quadOut);
+			
+			
+			case Key.R				: if (System.keyboard.isDown(Key.Control)) 
+				#if html 
+					js.Browser.document.location.reload();
+				#elseif flash
+					flash.external.ExternalInterface.call('document.location.reload');
+				#end
 			
 			default:
 				trace(e.key);
