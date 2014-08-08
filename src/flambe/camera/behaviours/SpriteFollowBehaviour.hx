@@ -9,11 +9,14 @@ import flambe.display.Sprite;
  */
 @:final class SpriteFollowBehaviour extends CameraControlBehaviour {
 	
+	var resetX			:Float = 0;
+	var resetY			:Float = 0;
+	
 	var _target			:Entity = null;	
 	var _targetSprite	:Sprite = null;	
 	
-	var xEaseTime		:Float = .25;
-	var yEaseTime		:Float = .25;
+	public var xEaseTime:Float = .25;
+	public var yEaseTime:Float = .25;
 	
 	public var target			(get, set)		:Entity;	
 	public var targetSprite		(get, never)	:Sprite;
@@ -22,8 +25,10 @@ import flambe.display.Sprite;
 	public var followTargetRotation				:Bool = false;
 	
 	
-	public function new(camera:Camera) {
+	public function new(camera:Camera, xEaseTime:Float=.25, yEaseTime:Float=.25) {
 		super(camera);
+		this.xEaseTime = xEaseTime;
+		this.yEaseTime = yEaseTime;
 	}
 	
 	
@@ -42,8 +47,6 @@ import flambe.display.Sprite;
 		_target = null;
 	}
 	
-	var resetX:Float = 0;
-	var resetY:Float = 0;
 	
 	override function set_enabled(value:Bool) {
 		if (_enabled && !value) {
@@ -76,9 +79,7 @@ import flambe.display.Sprite;
 		return _target = value;
 	}
 	
-	
-	inline function get_targetSprite():Sprite return _targetSprite;		
-	
+	inline function get_targetSprite():Sprite return _targetSprite;
 	
 	inline function get_canFollowTarget():Bool return _target != null && _targetSprite != null;
 }
