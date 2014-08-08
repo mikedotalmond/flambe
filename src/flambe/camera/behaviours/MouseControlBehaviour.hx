@@ -134,8 +134,10 @@ import flambe.util.SignalConnection;
 	
 	static inline var rotateStep	:Float = 22.5;
 	
+	public var scrollZoom			:Bool = true;
+	
 	function onMouseScroll(direction:Float) {
-		if (_enabled) {
+		if (_enabled && scrollZoom) {
 			var c = controller;
 			if(System.keyboard.isDown(Key.Shift)) {
 				c.rotation.animateBy(((direction > 0)? -rotateStep:rotateStep), zoomTime, Ease.quadOut);

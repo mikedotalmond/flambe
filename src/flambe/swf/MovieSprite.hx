@@ -178,11 +178,10 @@ class MovieSprite extends Sprite
 
 	
 	// tint the children!
-	override public function setTint(r:Float, g:Float, b:Float, durtaion:Float=0, ease:EaseFunction=null):Sprite {
-		super.setTint(r, g, b, durtaion, ease);
+	override public function setTint(r:Float, g:Float, b:Float, duration:Float=0, ease:EaseFunction=null):Sprite {
 		for (ani in _animators) {
 			var spr = ani.content.get(Sprite);
-			if (spr != null) spr.setTint(r, g, b, durtaion, ease);
+			if (spr != null) spr.setTint(r, g, b, duration, ease);
 		}
 		return this;
 	}
