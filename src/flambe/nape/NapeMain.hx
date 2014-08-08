@@ -166,7 +166,7 @@ class NapeMain {
 	}
 	
 	
-	#if(!android||ios)
+	#if !(android||ios)
 	function onKey(e:KeyboardEvent) {
 		
 		switch(e.key) {
