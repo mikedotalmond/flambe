@@ -83,7 +83,7 @@ class DrawPatternGL extends ShaderGL
 }
 
 
-
+#if flambe_enable_tint
 @:keep
 class DrawTintedPatternGL extends ShaderGL
 {
@@ -166,3 +166,4 @@ class DrawTintedPatternGL extends ShaderGL
     var u_texture :UniformLocation;
     var u_region :UniformLocation;
 }
+#end

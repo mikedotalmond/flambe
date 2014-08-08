@@ -34,7 +34,7 @@ class DrawPattern extends Shader
     }
 }
 
-
+#if flambe_enable_tint
 /**
  * Shader that draws textured triangles with a given alpha and rgb tint (multipliers)
  * Requries 8 Floats/Vertex
@@ -70,3 +70,4 @@ class DrawPattern extends Shader
         }
     }
 }
+#end

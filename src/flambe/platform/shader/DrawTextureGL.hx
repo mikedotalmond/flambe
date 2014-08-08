@@ -76,7 +76,7 @@ class DrawTextureGL extends ShaderGL
 
 
 
-
+#if flambe_enable_tint
 class DrawTextureWithTintGL extends ShaderGL
 {
     public function new (gl :RenderingContext)
@@ -150,3 +150,4 @@ class DrawTextureWithTintGL extends ShaderGL
 
     var u_texture :UniformLocation;
 }
+#end

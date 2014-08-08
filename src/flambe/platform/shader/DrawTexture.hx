@@ -38,6 +38,7 @@ class DrawTexture extends Shader
  * Shader that draws textured triangles with a given alpha and rgb tint (multipliers)
  * Requries 8 Floats/Vertex
  */
+#if flambe_enable_tint
 @:final class DrawTextureWithTint extends Shader {
 	
     static var SRC = {
@@ -69,3 +70,4 @@ class DrawTexture extends Shader
         }
     }
 }
+#end

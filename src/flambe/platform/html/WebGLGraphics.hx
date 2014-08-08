@@ -44,10 +44,11 @@ class WebGLGraphics
 
         current.matrix.clone(state.matrix);
         state.alpha = current.alpha;
-        state.tintR = current.tintR;
+        #if flambe_enable_tint
+		state.tintR = current.tintR;
         state.tintG = current.tintG;
         state.tintB = current.tintB;
-		
+		#end
         state.blendMode = current.blendMode;
         state.scissor = (current.scissor != null) ? current.scissor.clone(state.scissor) : null;
         _stateList = state;
@@ -120,48 +121,61 @@ class WebGLGraphics
         var u2 = u1 + sourceW/rootWidth;
         var v2 = v1 + sourceH/rootHeight;
         var alpha = state.alpha;
+		 
+		#if flambe_enable_tint
 		var tintR = state.tintR;
 		var tintG = state.tintG;
 		var tintB = state.tintB;
-
         var offset = _batcher.prepareDrawTintedTexture(_renderTarget, state.blendMode, state.scissor, texture);
-        var data = _batcher.data;
+		#else
+        var offset = _batcher.prepareDrawTexture(_renderTarget, state.blendMode, state.scissor, texture);
+		#end
+      
+		var data = _batcher.data;
 
         data[  offset] = pos[0];
         data[++offset] = pos[1];
         data[++offset] = u1;
         data[++offset] = v1;
         data[++offset] = alpha;
+        #if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
       	data[++offset] = tintB;
-
+		#end
+		
         data[++offset] = pos[2];
         data[++offset] = pos[3];
         data[++offset] = u2;
         data[++offset] = v1;
-        data[++offset] = alpha;
+        data[++offset] = alpha;		
+        #if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
       	data[++offset] = tintB;
+		#end
 
         data[++offset] = pos[4];
         data[++offset] = pos[5];
         data[++offset] = u2;
         data[++offset] = v2;
         data[++offset] = alpha;
+        #if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
       	data[++offset] = tintB;
-
+		#end
+		
         data[++offset] = pos[6];
         data[++offset] = pos[7];
         data[++offset] = u1;
         data[++offset] = v2;
         data[++offset] = alpha;
+         #if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
       	data[++offset] = tintB;
+		#end
     }
 
     public function drawPattern (texture :Texture, x :Float, y :Float, width :Float, height :Float)
@@ -175,11 +189,15 @@ class WebGLGraphics
         var u2 = width / root.width;
         var v2 = height / root.height;
         var alpha = state.alpha;
-		var tintR = state.tintR;
+		#if flambe_enable_tint
+        var tintR = state.tintR;
 		var tintG = state.tintG;
 		var tintB = state.tintB;
-
         var offset = _batcher.prepareDrawTintedPattern(_renderTarget, state.blendMode, state.scissor, texture);
+		#else
+		var offset = _batcher.prepareDrawPattern(_renderTarget, state.blendMode, state.scissor, texture);
+		#end
+		
         var data = _batcher.data;
 
         data[  offset] = pos[0];
@@ -187,36 +205,44 @@ class WebGLGraphics
         data[++offset] = 0;
         data[++offset] = 0;
         data[++offset] = alpha;
+        #if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
       	data[++offset] = tintB;
+		#end
 
         data[++offset] = pos[2];
         data[++offset] = pos[3];
         data[++offset] = u2;
         data[++offset] = 0;
         data[++offset] = alpha;
+        #if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
       	data[++offset] = tintB;
+		#end
 
         data[++offset] = pos[4];
         data[++offset] = pos[5];
         data[++offset] = u2;
         data[++offset] = v2;
         data[++offset] = alpha;
+        #if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
       	data[++offset] = tintB;
+		#end
 
         data[++offset] = pos[6];
         data[++offset] = pos[7];
         data[++offset] = 0;
         data[++offset] = v2;
         data[++offset] = alpha;
+		#if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
       	data[++offset] = tintB;
+		#end
     }
 
     public function fillRect (color :Int, x :Float, y :Float, width :Float, height :Float)
@@ -278,9 +304,11 @@ class WebGLGraphics
 
 	public function setTint(r:Float,g:Float,b:Float)
     {
-        getTopState().tintR = r;
-        getTopState().tintG = g;
-        getTopState().tintB = b;
+		#if flambe_enable_tint
+		getTopState().tintR = r;
+		getTopState().tintG = g;
+		getTopState().tintB = b;
+		#end
     }
 
     public function applyScissor (x :Float, y :Float, width :Float, height :Float)
@@ -378,9 +406,11 @@ private class DrawingState
 {
     public var matrix :Matrix;
     public var alpha :Float;
+	#if flambe_enable_tint
 	public var tintR :Float;
 	public var tintG :Float;
 	public var tintB :Float;
+	#end
     public var blendMode :BlendMode;
     public var scissor :Rectangle = null;
 
@@ -391,9 +421,11 @@ private class DrawingState
     {
         matrix = new Matrix();
         alpha = 1;
+		#if flambe_enable_tint
 		tintR = 1.0;
 		tintG = 1.0;
 		tintB = 1.0;
+		#end
         blendMode = Normal;
     }
 

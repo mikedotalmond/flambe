@@ -38,9 +38,13 @@ class WebGLBatcher
         gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, _quadIndexBuffer);
 
         _drawTextureShader = new DrawTextureGL(gl);
-        _drawTextureWithTintShader = new DrawTextureWithTintGL(gl);
-        _drawPatternShader = new DrawPatternGL(gl);
+        
+		#if flambe_enable_tint
+		_drawTextureWithTintShader = new DrawTextureWithTintGL(gl);
         _drawTintedPatternShader = new DrawTintedPatternGL(gl);
+		#end
+		
+        _drawPatternShader = new DrawPatternGL(gl);
         _fillRectShader = new FillRectGL(gl);
 
         resize(16);
@@ -120,6 +124,7 @@ class WebGLBatcher
         return prepareQuad(5, renderTarget, blendMode, scissor, _drawTextureShader);
     }
 
+	 #if flambe_enable_tint
 	public function prepareDrawTintedTexture (renderTarget :WebGLTextureRoot,
         blendMode :BlendMode, scissor :Rectangle, texture :WebGLTexture) :Int
     {
@@ -129,6 +134,7 @@ class WebGLBatcher
         }
         return prepareQuad(8, renderTarget, blendMode, scissor, _drawTextureWithTintShader);
     }
+	#end
 
     public function prepareDrawPattern (renderTarget :WebGLTextureRoot,
         blendMode :BlendMode, scissor :Rectangle, texture :WebGLTexture) :Int
@@ -140,6 +146,7 @@ class WebGLBatcher
         return prepareQuad(5, renderTarget, blendMode, scissor, _drawPatternShader);
     }
 	
+	#if flambe_enable_tint
 	public function prepareDrawTintedPattern (renderTarget :WebGLTextureRoot,
         blendMode :BlendMode, scissor :Rectangle, texture :WebGLTexture) :Int
 	{
@@ -149,6 +156,7 @@ class WebGLBatcher
         }
         return prepareQuad(8, renderTarget, blendMode, scissor, _drawTintedPatternShader);
     }
+	#end
 
     public function prepareFillRect (renderTarget :WebGLTextureRoot,
         blendMode :BlendMode, scissor :Rectangle) :Int
@@ -235,7 +243,11 @@ class WebGLBatcher
             _currentShader = _lastShader;
         }
 
-        if (_lastShader == _drawPatternShader || _lastShader == _drawTintedPatternShader) {
+        #if flambe_enable_tint
+		if (_lastShader == _drawPatternShader || _lastShader == _drawTintedPatternShader) {
+		#else
+        if (_lastShader == _drawPatternShader) {
+		#end 
 			var texture = _lastTexture;
             var root = texture.root;
 			(cast _lastShader).setRegion(
@@ -247,7 +259,7 @@ class WebGLBatcher
 
         // _gl.bufferSubData(GL.ARRAY_BUFFER, 0, data.subarray(0, _dataOffset));
         _gl.bufferData(GL.ARRAY_BUFFER, data.subarray(0, _dataOffset), GL.STREAM_DRAW);
-        _gl.drawElements(GL.TRIANGLES, 6*_quads, GL.UNSIGNED_SHORT, 0);
+        _gl.drawElements(GL.TRIANGLES, 6 * _quads, GL.UNSIGNED_SHORT, 0);
 
         _quads = 0;
         _dataOffset = 0;
@@ -263,18 +275,18 @@ class WebGLBatcher
         _maxQuads = maxQuads;
 
         // Set the new vertex buffer size
-        data = new Float32Array(maxQuads*4*MAX_ELEMENTS_PER_VERTEX);
+        data = new Float32Array((maxQuads<<2)*MAX_ELEMENTS_PER_VERTEX);
         _gl.bufferData(GL.ARRAY_BUFFER,
             data.length*Float32Array.BYTES_PER_ELEMENT, GL.STREAM_DRAW);
 
         var indices = new Uint16Array(6*maxQuads);
         for (ii in 0...maxQuads) {
-            indices[ii*6 + 0] = ii*4 + 0;
-            indices[ii*6 + 1] = ii*4 + 1;
-            indices[ii*6 + 2] = ii*4 + 2;
-            indices[ii*6 + 3] = ii*4 + 2;
-            indices[ii*6 + 4] = ii*4 + 3;
-            indices[ii*6 + 5] = ii*4 + 0;
+            indices[ii*6 + 0] = (ii<<2) + 0;
+            indices[ii*6 + 1] = (ii<<2) + 1;
+            indices[ii*6 + 2] = (ii<<2) + 2;
+            indices[ii*6 + 3] = (ii<<2) + 2;
+            indices[ii*6 + 4] = (ii<<2) + 3;
+            indices[ii*6 + 5] = (ii<<2) + 0;
         }
         _gl.bufferData(GL.ELEMENT_ARRAY_BUFFER, indices, GL.STATIC_DRAW);
     }
@@ -293,7 +305,13 @@ class WebGLBatcher
         _lastRenderTarget = texture;
     }
 
-    private static inline var MAX_ELEMENTS_PER_VERTEX = 8;
+    
+	#if flambe_enable_tint
+	private static inline var MAX_ELEMENTS_PER_VERTEX = 8;
+	#else
+	private static inline var MAX_ELEMENTS_PER_VERTEX = 6;
+	#end
+	
     private static inline var MAX_BATCH_QUADS = 1024;
 
     private var _gl :RenderingContext;
@@ -315,10 +333,13 @@ class WebGLBatcher
     private var _vertexBuffer :Buffer;
     private var _quadIndexBuffer :Buffer;
 
-    private var _drawTextureShader :DrawTextureGL;
+	#if flambe_enable_tint
     private var _drawTextureWithTintShader :DrawTextureWithTintGL;
-    private var _drawPatternShader :DrawPatternGL;
     private var _drawTintedPatternShader :DrawTintedPatternGL;
+	#end
+	
+    private var _drawTextureShader :DrawTextureGL;
+    private var _drawPatternShader :DrawPatternGL;
     private var _fillRectShader :FillRectGL;
 
     private var _quads :Int = 0;

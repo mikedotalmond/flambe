@@ -30,10 +30,14 @@ class Stage3DBatcher
     {
         _context3D = context3D;
         _drawTextureShader = new DrawTexture();
-        _drawTextureWithTintShader = new DrawTextureWithTint();
+       
         _drawPatternShader = new DrawPattern();
+        _fillRectShader = new FillRect(); 
+		
+		#if flambe_enable_tint
+		_drawTextureWithTintShader = new DrawTextureWithTint();
         _drawPatternWithTintShader = new DrawPatternWithTint();
-        _fillRectShader = new FillRect();
+		#end
 
         _scratchScissor = new Rectangle();
 
@@ -192,7 +196,8 @@ class Stage3DBatcher
     }
 
 	
-	/** Adds a quad to the batch, using the DrawTextureWithTint shader. */
+	#if flambe_enable_tint
+	/** Adds a quad to the batch, using the DrawTextureWithTint shader.  */
     public function prepareDrawTintedTexture (renderTarget :Stage3DTextureRoot,
         blendMode :BlendMode, scissor :Rectangle, texture :Stage3DTexture) :Int
     {
@@ -202,6 +207,7 @@ class Stage3DBatcher
         }
         return prepareQuad(8, renderTarget, blendMode, scissor, _drawTextureWithTintShader);
     }
+	#end
 	
 
     /** Adds a quad to the batch, using the DrawPattern shader. */
@@ -215,6 +221,7 @@ class Stage3DBatcher
         return prepareQuad(5, renderTarget, blendMode, scissor, _drawPatternShader);
     }
 	
+	#if flambe_enable_tint
 	public function prepareDrawTintedPattern (renderTarget :Stage3DTextureRoot,
         blendMode :BlendMode, scissor :Rectangle, texture :Stage3DTexture) :Int
     {
@@ -224,7 +231,7 @@ class Stage3DBatcher
         }
         return prepareQuad(8, renderTarget, blendMode, scissor, _drawPatternWithTintShader);
     }
-	
+	#end
 	
 
     /** Adds a quad to the batch, using the FillRect shader. */
@@ -313,11 +320,28 @@ class Stage3DBatcher
 
         var vertexBuffer = null;
         // TODO(bruno): Optimize with switch/case?
-        if (_lastShader == _drawTextureShader || _lastShader == _drawTextureWithTintShader) {
-            _drawTextureWithTintShader.texture = _drawTextureShader.texture = _lastTexture.root.nativeTexture;
+		#if flambe_enable_tint 
+		if (_lastShader == _drawTextureShader || _lastShader == _drawTextureWithTintShader) {
+			 _drawTextureWithTintShader.texture = _drawTextureShader.texture = _lastTexture.root.nativeTexture;
+			
+		#else
+        if (_lastShader == _drawTextureShader) {
+			_drawTextureShader.texture = _lastTexture.root.nativeTexture;			
+		#end
+			
             _lastShader.rebuildVars(); 
+			
+			#if flambe_enable_tint
 			vertexBuffer = (_lastShader == _drawTextureWithTintShader) ? _vertexBuffer8 : _vertexBuffer5;
+			#else
+			vertexBuffer = _vertexBuffer5;
+			#end
+			
+		#if flambe_enable_tint 
 		} else if (_lastShader == _drawPatternShader || _lastShader == _drawPatternWithTintShader) {
+		#else
+		} else if (_lastShader == _drawPatternShader ) {
+		#end
             var region = _scratchVector3D;
             var texture = _lastTexture;
             var root = texture.root;
@@ -325,20 +349,32 @@ class Stage3DBatcher
             region.w = texture.rootY / root.height; // y
             region.x = texture.width / root.width; // width
             region.y = texture.height / root.height; // height
+			
+			#if flambe_enable_tint 
             _drawPatternShader.texture = _drawPatternWithTintShader.texture = root.nativeTexture;
             _drawPatternShader.region = _drawPatternWithTintShader.region = region;
+			#else
+			_drawPatternShader.texture = root.nativeTexture;
+            _drawPatternShader.region  = region;
+			#end
+            
             _lastShader.rebuildVars();
+			
+			#if flambe_enable_tint
 			vertexBuffer = (_lastShader == _drawPatternWithTintShader) ? _vertexBuffer8 : _vertexBuffer5;
+			#else
+			vertexBuffer = _vertexBuffer5;
+			#end
+			
         } else if (_lastShader == _fillRectShader) {
             vertexBuffer = _vertexBuffer6;
         }
 		
-        // vertexBuffer.uploadFromVector(data, 0, _quads<<2);
-        vertexBuffer.uploadFromVector(data, 0, _maxQuads<<2);
+        vertexBuffer.uploadFromVector(data, 0, _maxQuads << 2);
         _lastShader.bind(_context3D, vertexBuffer);
         _context3D.drawTriangles(_quadIndexBuffer, 0, _quads<<1);
         _lastShader.unbind(_context3D);
-
+		
 #if flambe_debug_renderer
         trace("Flushed " + _quads + " / " + _maxQuads + " quads");
 #end
@@ -376,11 +412,13 @@ class Stage3DBatcher
         var verts = maxQuads << 2;
         _vertexBuffer5 = createVertexBuffer(verts, 5, _vertexBuffer5);
         _vertexBuffer6 = createVertexBuffer(verts, 6, _vertexBuffer6);
+		
+		#if flambe_enable_tint
         _vertexBuffer8 = createVertexBuffer(verts, 8, _vertexBuffer8);
+		#end
     }
 
-    private function createVertexBuffer (verts :Int, elementsPerVertex :Int,
-        oldBuffer :VertexBuffer3D) :VertexBuffer3D
+    private function createVertexBuffer (verts :Int, elementsPerVertex :Int, oldBuffer :VertexBuffer3D) :VertexBuffer3D
     {
         if (oldBuffer != null) {
             oldBuffer.dispose();
@@ -388,7 +426,12 @@ class Stage3DBatcher
         return _context3D.createVertexBuffer(verts, elementsPerVertex);
     }
 
+	#if flambe_enable_tint
     private static inline var MAX_ELEMENTS_PER_VERTEX = 8;
+	#else
+	private static inline var MAX_ELEMENTS_PER_VERTEX = 6;
+	#end
+	
     private static inline var MAX_BATCH_QUADS = 1024;
 
     private static var _scratchVector3D = new Vector3D();
@@ -411,16 +454,19 @@ class Stage3DBatcher
     private var _pendingSetScissor :Bool;
 
     private var _drawTextureShader :DrawTexture;
-    private var _drawTextureWithTintShader :DrawTextureWithTint;
     private var _drawPatternShader :DrawPattern;
-    private var _drawPatternWithTintShader :DrawPatternWithTint;
     private var _fillRectShader :FillRect;
-
+	
+	#if flambe_enable_tint
+    var _drawTextureWithTintShader :DrawTextureWithTint;
+    var _drawPatternWithTintShader :DrawPatternWithTint;
+    var _vertexBuffer8 	:VertexBuffer3D;
+	#end
+	
     private var _quadIndexBuffer :IndexBuffer3D;
     private var _vertexBuffer5 :VertexBuffer3D;
     private var _vertexBuffer6 :VertexBuffer3D;
-    private var _vertexBuffer8 :VertexBuffer3D;
-
+	
     private var _quads :Int;
     private var _maxQuads :Int;
     private var _dataOffset :Int;

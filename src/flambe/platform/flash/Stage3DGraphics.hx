@@ -43,9 +43,11 @@ import flambe.util.Assert;
 
         state.matrix.copyFrom(current.matrix);
 		
+		#if flambe_enable_tint
         state.tintR = current.tintR;
         state.tintG = current.tintG;
         state.tintB = current.tintB;
+		#end
 		
         state.alpha = current.alpha;
         state.blendMode = current.blendMode;
@@ -121,11 +123,16 @@ import flambe.util.Assert;
         var u2 = u1 + sourceW/rootWidth;
         var v2 = v1 + sourceH/rootHeight;
         var alpha = state.alpha;
+		
+		#if flambe_enable_tint
 		var tintR = state.tintR;
 		var tintG = state.tintG;
 		var tintB = state.tintB;
-
-        var offset = _batcher.prepareDrawTintedTexture(_renderTarget, state.blendMode, state.getScissor(), texture);
+		var offset = _batcher.prepareDrawTintedTexture(_renderTarget, state.blendMode, state.getScissor(), texture);
+        #else
+		var offset = _batcher.prepareDrawTexture(_renderTarget, state.blendMode, state.getScissor(), texture);       
+		#end
+		
         var data = _batcher.data;
 
         data[  offset] = pos[0];
@@ -133,36 +140,44 @@ import flambe.util.Assert;
         data[++offset] = u1;
         data[++offset] = v1;
         data[++offset] = alpha;
+		#if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
       	data[++offset] = tintB;
+		#end
 
         data[++offset] = pos[3];
         data[++offset] = pos[4];
         data[++offset] = u2;
         data[++offset] = v1;
         data[++offset] = alpha;
+		#if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
         data[++offset] = tintB;
+		#end
 
         data[++offset] = pos[6];
         data[++offset] = pos[7];
         data[++offset] = u2;
         data[++offset] = v2;
         data[++offset] = alpha;
+		#if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
         data[++offset] = tintB;
+		#end
 
         data[++offset] = pos[9];
         data[++offset] = pos[10];
         data[++offset] = u1;
         data[++offset] = v2;
         data[++offset] = alpha;
+		#if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
         data[++offset] = tintB;
+		#end
     }
 
     public function drawPattern (texture :Texture, x :Float, y :Float, width :Float, height :Float)
@@ -179,49 +194,63 @@ import flambe.util.Assert;
         var u2 = width / root.width;
         var v2 = height / root.height;
 		var alpha = state.alpha;
+		
+		#if flambe_enable_tint
 		var tintR = state.tintR;
 		var tintG = state.tintG;
-		var tintB = state.tintB;
+		var tintB = state.tintB; 
+		var offset = _batcher.prepareDrawTintedPattern(_renderTarget, state.blendMode, state.getScissor(), texture);
+        #else
+		var offset = _batcher.prepareDrawPattern(_renderTarget, state.blendMode, state.getScissor(), texture);
+		#end
 
-        var offset = _batcher.prepareDrawTintedPattern(_renderTarget, state.blendMode, state.getScissor(), texture);
-        var data = _batcher.data;
+       var data = _batcher.data;
 
         data[  offset] = pos[0];
         data[++offset] = pos[1];
         data[++offset] = 0;
         data[++offset] = 0;
         data[++offset] = alpha;
+		#if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
         data[++offset] = tintB;
+		#end
 
         data[++offset] = pos[3];
         data[++offset] = pos[4];
         data[++offset] = u2;
         data[++offset] = 0;
         data[++offset] = alpha;
+        #if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
         data[++offset] = tintB;
+		#end
 
         data[++offset] = pos[6];
         data[++offset] = pos[7];
         data[++offset] = u2;
         data[++offset] = v2;
         data[++offset] = alpha;
+        #if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
         data[++offset] = tintB;
+		#end
 
         data[++offset] = pos[9];
         data[++offset] = pos[10];
         data[++offset] = 0;
         data[++offset] = v2;
         data[++offset] = alpha;
+        #if flambe_enable_tint
         data[++offset] = tintR;
         data[++offset] = tintG;
         data[++offset] = tintB;
+		#end
     }
+	
 
     public function fillRect (color :Int, x :Float, y :Float, width :Float, height :Float)
     {
@@ -285,9 +314,11 @@ import flambe.util.Assert;
 
 	public function setTint (r:Float,g:Float,b:Float)
     {
-        getTopState().tintR = r;
+		#if flambe_enable_tint
+		getTopState().tintR = r;
         getTopState().tintG = g;
         getTopState().tintB = b;
+		#end
     }
 
 
@@ -404,9 +435,11 @@ private class DrawingState
     public var alpha :Float;
     public var blendMode :BlendMode;
 
+	#if flambe_enable_tint
 	public var tintR:Float;
 	public var tintG:Float;
 	public var tintB:Float;
+	#end
 
     public var scissor :Rectangle;
     public var scissorEnabled :Bool;
@@ -418,9 +451,11 @@ private class DrawingState
     {
         matrix = new Matrix3D();
         alpha = 1;
-		tintR = tintG = tintB = 1;
         blendMode = Normal;
         scissor = new Rectangle();
+		#if flambe_enable_tint
+		tintR = tintG = tintB = 1;
+		#end
     }
 
     public function getScissor () :Rectangle
