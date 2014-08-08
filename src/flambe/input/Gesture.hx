@@ -31,8 +31,6 @@ package flambe.input;
 	
     public function toString():String return '${type} x:${x}, y:${y}, extra=${extra}';
 	
-	
-	
 	inline function setTo(x:Float, y:Float, ?extra:Dynamic = null):Gesture {
 		this.x = x; this.y = y;
 		this.extra = extra;

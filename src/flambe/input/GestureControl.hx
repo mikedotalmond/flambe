@@ -70,10 +70,6 @@ import haxe.Timer;
         touchList	= new List<TouchData>();
 		touchTimes	= new Map<Int,Float>();
 		gestures 	= createGestures();
-		
-		#if debug
-		gesture.connect(function(g) { trace(g.toString()); });
-		#end
     }
 	
 	
