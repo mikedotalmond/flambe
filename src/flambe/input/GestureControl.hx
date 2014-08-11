@@ -64,7 +64,6 @@ import haxe.Timer;
 	var tempPoint		:Point;
 	
     public function new() {	
-		
 		tempPoint 	= new Point();
 		gesture 	= new Signal1<Gesture>();
         touchList	= new List<TouchData>();
@@ -145,10 +144,10 @@ import haxe.Timer;
     function onTouch(type:TouchType, id:Int, x:Float, y:Float) {
         var primary = (touch0 == null || touch0.id == id);
         if (primary || (touch1 != null && touch1.id == id) || (touch0 != null && touch1 == null && touch0.id != id)) {
-			var tData = cast { time:Timer.stamp(), id:id, x:x, y:y };
-			handleTouch(type, tData, primary);
+			handleTouch(type, { time:Timer.stamp(), id:id, x:x, y:y }, primary);
         }
     }
+	
 	
 	//get, set, and trigger a gesture
 	inline function trigger(type:GestureType, x:Float, y:Float, ?extra:Dynamic=null) {
@@ -177,6 +176,7 @@ import haxe.Timer;
 					touch0 = tData;
 					touchTimes.set(tData.id, now);
 					longPressTimer = Timer.delay(sendLongPress.bind(tData), Std.int(longPressDelay * 1000));
+					trigger(GestureType.GESTURE_BEGIN, x, y);
 				} else {
 					handled = false;
 				}
@@ -184,6 +184,7 @@ import haxe.Timer;
 			case GestureState.BEGIN:
 				if (primary && type == TouchType.TOUCH_END) {
 					trigger(GestureType.GESTURE_TAP, x, y);
+					trigger(GestureType.GESTURE_END, x, y);
 					setReady();
 				} else if (primary && type == TouchType.TOUCH_MOVE) {
 					tempPoint.set(x - touch0.x, y - touch0.y);
@@ -218,7 +219,10 @@ import haxe.Timer;
 						polar(tempPoint, len / -dt, angle);
 						trigger(GestureType.GESTURE_SWIPE, x, y, tempPoint);
 					}
+					
+					trigger(GestureType.GESTURE_END, x, y);
 					setReady();
+					
 				} else if (!primary && type == TouchType.TOUCH_BEGIN) {
 					trigger(GestureType.GESTURE_BEGIN, x, y);
 					setTwoFingerMove(tData);
@@ -253,6 +257,7 @@ import haxe.Timer;
 	
     inline function sendLongPress(t:TouchData) {
         trigger(GestureType.GESTURE_LONG_PRESS, t.x, t.y);
+		trigger(GestureType.GESTURE_END, t.x, t.y);
 		setReady();
     }
 
