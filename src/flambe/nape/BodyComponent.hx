@@ -24,7 +24,10 @@ class BodyComponent extends Component {
 
 	var space:Space;
 	var world:Entity;
-
+	
+	var scaleX:Float = 1;
+	var scaleY:Float = 1;
+	
     public var body(default, null):Body;
 	public var bounds(default, null):AABB;
 
@@ -50,14 +53,12 @@ class BodyComponent extends Component {
 		this.bounds = bounds;
     }
 
-	override public function onAdded() {
+	override public function onStart() {
 		space		= world.get(SpaceComponent).napeSpace;
 		sprite 		= owner.get(Sprite);
 		body.space 	= space;
 	}
 
-	var scaleX:Float = 1;
-	var scaleY:Float = 1;
 	public function setScale(x, y) {
 		body.scaleShapes(1 / scaleX, 1 / scaleY);
 		sprite.scaleX._ = scaleX = x;
