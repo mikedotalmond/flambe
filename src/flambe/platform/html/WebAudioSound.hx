@@ -94,16 +94,9 @@ class WebAudioSound extends BasicAsset<WebAudioSound>
     {
         // Fall back to createGainNode used in iOS Safari
         // https://developer.mozilla.org/en-US/docs/Web_Audio_API/Porting_webkitAudioContext_code_to_standards_based_AudioContext
-        //return (ctx.createGain != null) ? ctx.createGain() : untyped ctx.createGainNode();
-		
-		// since adding the 'untyped' using a ternary op for this (as above) appears to create/cause a runtime error in firefox.... something goes wrong in the bind function
-		if (ctx.createGain != null) {
-			return ctx.createGain();
-		} else {
-			return untyped ctx.createGainNode();
-		}
+        return (ctx.createGain != null) ? ctx.createGain() : (untyped ctx.createGainNode());
 	}
-		
+	
 
     public static function start (node:AudioBufferSourceNode, time :Float, offset:Float=0, duration:Float=0)
     {
