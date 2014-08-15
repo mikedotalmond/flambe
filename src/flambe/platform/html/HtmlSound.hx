@@ -4,6 +4,7 @@
 
 package flambe.platform.html;
 
+import flambe.math.FMath;
 import js.Browser;
 import js.html.AudioElement;
 import js.html.MediaElement;
@@ -73,14 +74,18 @@ private class HtmlPlayback
     {
         _sound = sound;
 		_loop = loop;		
-		_playOffset = offset;
-		_playDuration = duration;
 		
+		_playOffset 	= FMath.clamp(offset, .0, sound.duration);
+		_playDuration 	= FMath.max(.0, FMath.min(duration, sound.duration));
+		
+		if(_playDuration==.0 && !_loop) _playDuration = sound.duration - _playOffset;	
+		
+		_waitingToSeek = _playOffset > 0;
         _tickableAdded = false;
 
         // Create a copy of the original sound's element. Note that cloneNode() doesn't work in IE
         _clonedElement = Browser.document.createAudioElement();
-        _clonedElement.loop = _loop && (offset==0&&duration==0); // only use .loop property for looping if offset + duration are not set.
+        _clonedElement.loop = _loop && (_playOffset==0&&_playDuration==0); // only use the .loop property for looping if offset + duration are not set.
         _clonedElement.src = sound.audioElement.src;
 		
         this.volume = new AnimatedFloat(volume, function (_,_) updateVolume());
@@ -136,13 +141,18 @@ private class HtmlPlayback
     {
         volume.update(dt);
         _complete._ = _clonedElement.ended;
-
-		if (_waitingToSeek && canSeekToOffset()) { // wanted to seek, but had to wait?
-			_waitingToSeek = false;
-			_clonedElement.currentTime = _playOffset;
-			if (paused) paused = false;
+		
+		
+		if (_waitingToSeek) {
+			if (canSeekToOffset()) {
+				_waitingToSeek = false;
+				_clonedElement.currentTime = _playOffset;
+				paused = false;
+			} else {
+				return false;
+			}
 		}
-			
+
         if (_complete._ || paused) {
             // Allow complete or paused sounds to be garbage collected
             _tickableAdded = false;
@@ -197,12 +207,12 @@ private class HtmlPlayback
         _clonedElement.play();
 		
 		if (_playOffset > 0) {
-			
 			if (canSeekToOffset()) {
+				_waitingToSeek = false;
 				_clonedElement.currentTime = _playOffset;
 			} else {
 				_waitingToSeek = true;
-				paused	= true;
+				if(!get_paused()) paused = true;
 			}
 		}		
 		
@@ -224,8 +234,9 @@ private class HtmlPlayback
     }
 	
 	function canSeekToOffset():Bool {	
-		
+			
 		// Will throw a DOM Exception: INVALID_STATE_ERR if you try to set currentTime before it's 'ready'... so wait a bit. probably just a tick
+		// trace("canSeek ? " + _clonedElement.readyState);
 		
 		if (_clonedElement.readyState >= MediaElement.HAVE_METADATA) {
 			var n = _clonedElement.seekable.length;
