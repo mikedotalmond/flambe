@@ -69,14 +69,12 @@ private class HtmlPlayback
     public var position (get, set) :Float;
     public var sound (get, null) :Sound;
 	
-	var _loop:Bool = false;
-	var playOffset:Float = 0;
-	var playDuration:Float = 0;
-	
     public function new (sound :HtmlSound, volume :Float, loop :Bool, offset:Float=0, duration:Float=0)
     {
         _sound = sound;
-		_loop  = loop;
+		_loop = loop;		
+		_playOffset = offset;
+		_playDuration = duration;
 		
         _tickableAdded = false;
 
@@ -88,9 +86,6 @@ private class HtmlPlayback
         this.volume = new AnimatedFloat(volume, function (_,_) updateVolume());
         updateVolume();
         _complete = new Value<Bool>(false);
-		
-		playOffset 	= offset;
-		playDuration = duration;
 		
         playAudio();
 
@@ -144,7 +139,7 @@ private class HtmlPlayback
 
 		if (_waitingToSeek && canSeekToOffset()) { // wanted to seek, but had to wait?
 			_waitingToSeek = false;
-			_clonedElement.currentTime = playOffset;
+			_clonedElement.currentTime = _playOffset;
 			if (paused) paused = false;
 		}
 			
@@ -161,14 +156,13 @@ private class HtmlPlayback
         } else {
 			
 			var now = _clonedElement.currentTime;
-			var end = playOffset + playDuration;
-			
+			var end = _playOffset + _playDuration;
 			
 			 if (_loop && !_clonedElement.loop) {
 				// want to loop, but a custom start/end range is specified
-				if (now >= end) _clonedElement.currentTime = playOffset;
+				if (now >= end) _clonedElement.currentTime = _playOffset;
 				
-			} else if(!_loop && playDuration > 0) {
+			} else if(!_loop && _playDuration > 0) {
 				// no loop, but have duration option - and are at or past the end time?
 				if (now >= end) dispose();	
 			}
@@ -202,10 +196,10 @@ private class HtmlPlayback
 
         _clonedElement.play();
 		
-		if (playOffset > 0) {
+		if (_playOffset > 0) {
 			
 			if (canSeekToOffset()) {
-				_clonedElement.currentTime = playOffset;
+				_clonedElement.currentTime = _playOffset;
 			} else {
 				_waitingToSeek = true;
 				paused	= true;
@@ -239,7 +233,7 @@ private class HtmlPlayback
 			for (i in 0...n) {
 				var start 	= seekable.start(i);
 				var end 	= seekable.end(i);
-				if (start <= playOffset && playOffset < end) {
+				if (start <= _playOffset && _playOffset < end) {
 					return true;
 				}
 			}
@@ -262,5 +256,9 @@ private class HtmlPlayback
 
     private var _complete :Value<Bool>;
 	
+	var _loop:Bool = false;
+	var _playOffset:Float = 0;
+	var _playDuration:Float = 0;
 	var _waitingToSeek = false;
+	
 }

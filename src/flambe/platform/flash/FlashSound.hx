@@ -36,10 +36,10 @@ class FlashSound extends BasicAsset<FlashSound>
         // Temporary hack around a bug in Haxe+AIR+iOS:
         // https://github.com/HaxeFoundation/haxe/issues/2431
         if (Math.isNaN(volume)) volume = 1.0;
-        if (Math.isNaN(offset)) offset = 0.0;
-        if (Math.isNaN(duration)) duration = 0.0;
+        if (Math.isNaN(offset)) offset = .0;
+        if (Math.isNaN(duration)) duration = .0;
 #end
-        return new FlashPlayback(this, volume, 0);
+        return new FlashPlayback(this, volume, false, offset, duration);
     }
 
     public function loop (volume :Float = 1.0, offset:Float=0, duration:Float=0) :Playback
@@ -50,10 +50,10 @@ class FlashSound extends BasicAsset<FlashSound>
         // Temporary hack around a bug in Haxe+AIR+iOS:
         // https://github.com/HaxeFoundation/haxe/issues/2431
         if (Math.isNaN(volume)) volume = 1.0;
-        if (Math.isNaN(offset)) offset = 0.0;
-        if (Math.isNaN(duration)) duration = 0.0;
+        if (Math.isNaN(offset)) offset = .0;
+        if (Math.isNaN(duration)) duration = .0;
 #end
-        return new FlashPlayback(this, volume, FMath.INT_MAX);
+        return new FlashPlayback(this, volume, true, offset, duration);
     }
 
     public function get_duration () :Float
@@ -84,19 +84,20 @@ private class FlashPlayback
     public var position (get, null) :Float;
     public var sound (get, null) :Sound;
 
-    public function new (sound :FlashSound, volume :Float, loops :Int)
+    public function new (sound :FlashSound, volume :Float, loop:Bool=false, offset:Float=0, duration:Float=0)
     {
         _sound = sound;
-        _loops = loops;
+        _loop = loop;
+		_playOffset = offset*1000;
+		_playDuration = duration*1000;
+		
         this.volume = new AnimatedFloat(volume, onVolumeChanged);
         _complete = new Value<Bool>(false);
 
-        playAudio(0, new SoundTransform(volume));
+        playAudio(_playOffset, new SoundTransform(volume));
 
         // Don't start playing until visible
-        if (System.hidden._) {
-            paused = true;
-        }
+        if (System.hidden._) paused = true;
     }
 
     public function onVolumeChanged (volume :Float, _)
@@ -125,12 +126,7 @@ private class FlashPlayback
                 _pausePosition = _channel.position;
                 _channel.stop();
             } else {
-                // FIXME(bruno): If this a one-shot sound, play a new channel at the old position.
-                // But if it's looping, we have to start back at the beginning or Flash will only
-                // seek back to _pausePosition on each loop. Maybe handle looping manually in this
-                // case?
-                var startPosition = (_loops > 0) ? 0 : _pausePosition;
-                playAudio(startPosition, _channel.soundTransform);
+				playAudio(_pausePosition, _channel.soundTransform);
             }
         }
         return paused;
@@ -159,7 +155,24 @@ private class FlashPlayback
             _channel.removeEventListener(Event.SOUND_COMPLETE, onSoundComplete);
 
             return true;
-        }
+        } else {
+			
+			var now = _channel==null ? 0 : _channel.position; // millis
+			var end = _playOffset + _playDuration;
+			
+			 if (_loop) {
+				// want to loop, but a custom start/end range is specified
+				if (now >= end) {
+					_channel.stop();
+					playAudio(_playOffset, _channel.soundTransform);					
+				}
+				
+			} else if(!_loop && _playDuration > 0) {
+				// no loop, but have duration option - and are at or past the end time?
+				if (now >= end) dispose();	
+			}
+		}
+		
         return false;
     }
 
@@ -176,8 +189,9 @@ private class FlashPlayback
 
     private function playAudio (startPosition :Float, soundTransform :SoundTransform)
     {
-        _channel = _sound.nativeSound.play(startPosition, _loops, soundTransform);
-        if (_channel == null) {
+        _channel = _sound.nativeSound.play(startPosition, 0, soundTransform);
+		
+		if (_channel == null) {
             // Sound.play may return null if the playback couldn't be started for some reason:
             // http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/Sound.html#play()
 #if debug
@@ -210,7 +224,9 @@ private class FlashPlayback
 
     private var _sound :FlashSound;
     private var _channel :SoundChannel;
-    private var _loops :Int;
+    private var _loop :Bool;
+    var _playOffset :Float;
+    var _playDuration :Float;
 
     private var _pausePosition :Float;
     private var _wasPaused :Bool;
