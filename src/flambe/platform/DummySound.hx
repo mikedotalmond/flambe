@@ -23,12 +23,12 @@ class DummySound extends BasicAsset<DummySound>
         _playback = new DummyPlayback(this);
     }
 
-    public function play (volume :Float = 1.0) :Playback
+    public function play (volume :Float = 1.0, offset:Float=0, duration:Float=-1) :Playback
     {
         return _playback;
     }
 
-    public function loop (volume :Float = 1.0) :Playback
+    public function loop (volume :Float = 1.0, offset:Float=0, duration:Float=-1) :Playback
     {
         return _playback;
     }
@@ -68,7 +68,7 @@ class DummyPlayback
     public var volume (default, null) :AnimatedFloat;
     public var paused (get, set) :Bool;
     public var complete (get, null) :Value<Bool>;
-    public var position (get, null) :Float;
+    public var position (get, set) :Float;
     public var sound (get, null) :Sound;
 
     public function new (sound :Sound)
@@ -99,6 +99,11 @@ class DummyPlayback
     }
 
     public function get_position () :Float
+    {
+        return 0;
+    }
+	
+	 public function set_position (value:Float) :Float
     {
         return 0;
     }

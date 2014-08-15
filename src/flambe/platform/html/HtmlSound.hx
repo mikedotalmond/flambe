@@ -5,6 +5,7 @@
 package flambe.platform.html;
 
 import js.Browser;
+import js.html.AudioElement;
 
 import flambe.animation.AnimatedFloat;
 import flambe.platform.Tickable;
@@ -17,26 +18,26 @@ class HtmlSound extends BasicAsset<HtmlSound>
     implements Sound
 {
     public var duration (get, null) :Float;
-    public var audioElement :Dynamic; // TODO(bruno): Use typed audio element extern
-
-    public function new (audioElement :Dynamic)
+    public var audioElement :AudioElement; // TODO(bruno): Use typed audio element extern
+	
+    public function new (audioElement :AudioElement)
     {
         super();
         this.audioElement = audioElement;
     }
 
-    public function play (volume :Float = 1.0) :Playback
+    public function play (volume :Float = 1.0, offset:Float=0, duration:Float=-1) :Playback
     {
         assertNotDisposed();
 
-        return new HtmlPlayback(this, volume, false);
+        return new HtmlPlayback(this, volume, false, offset, duration);
     }
 
-    public function loop (volume :Float = 1.0) :Playback
+    public function loop (volume :Float = 1.0, offset:Float=0, duration:Float=-1) :Playback
     {
         assertNotDisposed();
 
-        return new HtmlPlayback(this, volume, true);
+        return new HtmlPlayback(this, volume, true, offset, duration);
     }
 
     public function get_duration () :Float
@@ -64,10 +65,10 @@ private class HtmlPlayback
     public var volume (default, null) :AnimatedFloat;
     public var paused (get, set) :Bool;
     public var complete (get, null) :Value<Bool>;
-    public var position (get, null) :Float;
+    public var position (get, set) :Float;
     public var sound (get, null) :Sound;
 
-    public function new (sound :HtmlSound, volume :Float, loop :Bool)
+    public function new (sound :HtmlSound, volume :Float, loop :Bool, offset:Float=0, duration:Float=-1)
     {
         _sound = sound;
         _tickableAdded = false;
@@ -119,6 +120,11 @@ private class HtmlPlayback
     public function get_position () :Float
     {
         return _clonedElement.currentTime;
+    }
+	
+	public function set_position (value:Float) :Float
+    {
+        return _clonedElement.currentTime = value;
     }
 
     public function update (dt :Float) :Bool
@@ -186,7 +192,7 @@ private class HtmlPlayback
     }
 
     private var _sound :HtmlSound;
-    private var _clonedElement :Dynamic;
+    private var _clonedElement :AudioElement;
     private var _volumeBinding :Disposable;
     private var _tickableAdded :Bool;
     private var _hideBinding :Disposable;
