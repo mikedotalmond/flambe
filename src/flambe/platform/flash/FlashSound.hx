@@ -84,18 +84,22 @@ private class FlashPlayback
     public var position (get, null) :Float;
     public var sound (get, null) :Sound;
 
+	
     public function new (sound :FlashSound, volume :Float, loop:Bool=false, offset:Float=0, duration:Float=0)
     {
         _sound = sound;
         _loop = loop;
-		_playOffset = offset*1000;
-		_playDuration = duration*1000;
+		
+		_playOffset = offset * 1000;
+		
+		if (duration == 0) _playDuration = (_sound.duration * 1000) - _playOffset;
+		else _playDuration = duration * 1000;
 		
         this.volume = new AnimatedFloat(volume, onVolumeChanged);
         _complete = new Value<Bool>(false);
 
         playAudio(_playOffset, new SoundTransform(volume));
-
+		
         // Don't start playing until visible
         if (System.hidden._) paused = true;
     }
@@ -160,8 +164,7 @@ private class FlashPlayback
 			var now = _channel==null ? 0 : _channel.position; // millis
 			var end = _playOffset + _playDuration;
 			
-			 if (_loop) {
-				// want to loop, but a custom start/end range is specified
+			 if (_loop) { // handle looping - return to _playOffset postion
 				if (now >= end) {
 					_channel.stop();
 					playAudio(_playOffset, _channel.soundTransform);					
@@ -184,7 +187,8 @@ private class FlashPlayback
 
     private function onSoundComplete (_)
     {
-        _complete._ = true;
+        if (_loop) playAudio(_playOffset, _channel.soundTransform);
+		else _complete._ = true;
     }
 
     private function playAudio (startPosition :Float, soundTransform :SoundTransform)
@@ -225,8 +229,8 @@ private class FlashPlayback
     private var _sound :FlashSound;
     private var _channel :SoundChannel;
     private var _loop :Bool;
-    var _playOffset :Float;
-    var _playDuration :Float;
+    var _playOffset :Float; //ms
+    var _playDuration :Float; //ms
 
     private var _pausePosition :Float;
     private var _wasPaused :Bool;
