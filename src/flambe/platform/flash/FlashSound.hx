@@ -28,7 +28,7 @@ class FlashSound extends BasicAsset<FlashSound>
         this.nativeSound = nativeSound;
     }
 
-    public function play (volume :Float = 1.0, offset:Float=0, duration:Float=-1) :Playback
+    public function play (volume :Float = 1.0, offset:Float=0, duration:Float=0) :Playback
     {
         assertNotDisposed();
 
@@ -36,11 +36,13 @@ class FlashSound extends BasicAsset<FlashSound>
         // Temporary hack around a bug in Haxe+AIR+iOS:
         // https://github.com/HaxeFoundation/haxe/issues/2431
         if (Math.isNaN(volume)) volume = 1.0;
+        if (Math.isNaN(offset)) offset = 0.0;
+        if (Math.isNaN(duration)) duration = 0.0;
 #end
         return new FlashPlayback(this, volume, 0);
     }
 
-    public function loop (volume :Float = 1.0, offset:Float=0, duration:Float=-1) :Playback
+    public function loop (volume :Float = 1.0, offset:Float=0, duration:Float=0) :Playback
     {
         assertNotDisposed();
 
@@ -48,6 +50,8 @@ class FlashSound extends BasicAsset<FlashSound>
         // Temporary hack around a bug in Haxe+AIR+iOS:
         // https://github.com/HaxeFoundation/haxe/issues/2431
         if (Math.isNaN(volume)) volume = 1.0;
+        if (Math.isNaN(offset)) offset = 0.0;
+        if (Math.isNaN(duration)) duration = 0.0;
 #end
         return new FlashPlayback(this, volume, FMath.INT_MAX);
     }

@@ -26,7 +26,7 @@ class WebAudioSound extends BasicAsset<WebAudioSound>
     /**
      * The shared gain node for global system volume.
      */
-    public static var gain :Dynamic;
+    public static var gain :GainNode;
 
     public var duration (get, null) :Float;
 
@@ -38,14 +38,14 @@ class WebAudioSound extends BasicAsset<WebAudioSound>
         this.buffer = buffer;
     }
 
-    public function play (volume :Float = 1.0, offset:Float=0, duration:Float=-1) :Playback
+    public function play (volume :Float = 1.0, offset:Float=0, duration:Float=0) :Playback
     {
         assertNotDisposed();
 
         return new WebAudioPlayback(this, volume, false, offset, duration);
     }
 
-    public function loop (volume :Float = 1.0, offset:Float=0, duration:Float=-1) :Playback
+    public function loop (volume :Float = 1.0, offset:Float=0, duration:Float=0) :Playback
     {
         assertNotDisposed();
 
@@ -77,9 +77,10 @@ class WebAudioSound extends BasicAsset<WebAudioSound>
             var AudioContext = HtmlUtil.loadExtension("AudioContext").value;
             if (AudioContext != null) {
                 ctx = untyped __new__(AudioContext);
-                gain = createGain();
-                gain.connect(ctx.destination);
-
+                
+				gain = createGain();
+				gain.connect(ctx.destination, null, null);
+				
                 System.volume.watch(function(volume, _) {
                     gain.gain.value = volume;
                 });
@@ -89,22 +90,27 @@ class WebAudioSound extends BasicAsset<WebAudioSound>
         return ctx != null;
     }
 
-    public static function createGain () :Dynamic
+    public static function createGain () :GainNode
     {
         // Fall back to createGainNode used in iOS Safari
         // https://developer.mozilla.org/en-US/docs/Web_Audio_API/Porting_webkitAudioContext_code_to_standards_based_AudioContext
-        return (ctx.createGain != null) ? ctx.createGain() : untyped ctx.createGainNode();
-    }
+        //return (ctx.createGain != null) ? ctx.createGain() : untyped ctx.createGainNode();
+		
+		// since adding the 'untyped' using a ternary op for this (as above) appears to create/cause a runtime error in firefox.... something goes wrong in the bind function
+		if (ctx.createGain != null) {
+			return ctx.createGain();
+		} else {
+			return untyped ctx.createGainNode();
+		}
+	}
+		
 
-    public static function start (node :Dynamic, time :Float, offset:Float=0, duration:Float=-1)
+    public static function start (node:AudioBufferSourceNode, time :Float, offset:Float=0, duration:Float=0)
     {
         // Fall back to noteOn used in iOS Safari
-        if (node.start != null) {
-			// (optional double when = 0, optional double offset = 0, optional double duration);
-            node.start(time, offset, duration==-1?null:duration);
-        } else {
-            node.noteOn(time);
-        }
+        if (node.start == null) untyped node.start = node.noteOn ;
+		node.start(time, offset, duration==0?null:duration);
+       
     }
 
     private static var _detectSupport = true;
@@ -120,7 +126,7 @@ private class WebAudioPlayback
     public var position (get, null) :Float;
     public var sound (get, null) :Sound;
 
-    public function new (sound :WebAudioSound, volume :Float, loop :Bool, offset:Float=0, duration:Float=-1)
+    public function new (sound :WebAudioSound, volume :Float, loop :Bool, offset:Float=0, duration:Float=0)
     {
         _sound = sound;
         _head = WebAudioSound.gain;
@@ -200,7 +206,7 @@ private class WebAudioPlayback
         volume.update(dt);
 
         // playbackState is used in old browsers that don't support onended (iOS)
-        if (_sourceNode.playbackState == 3 /* FINISHED_STATE */) {
+        if (_sourceNode.playbackState == AudioBufferSourceNode.FINISHED_STATE) {
             _complete._ = true;
         }
 
@@ -231,13 +237,13 @@ private class WebAudioPlayback
         _gainNode.gain.value = volume;
     }
 
-    private function insertNode (head :Dynamic)
+    private function insertNode (head : AudioNode)
     {
         if (!paused) {
-            _sourceNode.disconnect(null);
-            _sourceNode.connect(head,null,null);
+            _sourceNode.disconnect(0);
+            _sourceNode.connect(head, null, null);
         }
-        head.connect(_head);
+        head.connect(_head, null,null);
         _head = head;
     }
 

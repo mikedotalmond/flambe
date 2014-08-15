@@ -6,6 +6,7 @@ package flambe.platform.html;
 
 import js.Browser;
 import js.html.AudioElement;
+import js.html.MediaElement;
 
 import flambe.animation.AnimatedFloat;
 import flambe.platform.Tickable;
@@ -26,14 +27,14 @@ class HtmlSound extends BasicAsset<HtmlSound>
         this.audioElement = audioElement;
     }
 
-    public function play (volume :Float = 1.0, offset:Float=0, duration:Float=-1) :Playback
+    public function play (volume :Float = 1.0, offset:Float=0, duration:Float=0) :Playback
     {
         assertNotDisposed();
 
         return new HtmlPlayback(this, volume, false, offset, duration);
     }
 
-    public function loop (volume :Float = 1.0, offset:Float=0, duration:Float=-1) :Playback
+    public function loop (volume :Float = 1.0, offset:Float=0, duration:Float=0) :Playback
     {
         assertNotDisposed();
 
@@ -67,21 +68,30 @@ private class HtmlPlayback
     public var complete (get, null) :Value<Bool>;
     public var position (get, set) :Float;
     public var sound (get, null) :Sound;
-
-    public function new (sound :HtmlSound, volume :Float, loop :Bool, offset:Float=0, duration:Float=-1)
+	
+	var _loop:Bool = false;
+	var playOffset:Float = 0;
+	var playDuration:Float = 0;
+	
+    public function new (sound :HtmlSound, volume :Float, loop :Bool, offset:Float=0, duration:Float=0)
     {
         _sound = sound;
+		_loop  = loop;
+		
         _tickableAdded = false;
 
         // Create a copy of the original sound's element. Note that cloneNode() doesn't work in IE
         _clonedElement = Browser.document.createAudioElement();
-        _clonedElement.loop = loop;
+        _clonedElement.loop = _loop && (offset==0&&duration==0); // only use .loop property for looping if offset + duration are not set.
         _clonedElement.src = sound.audioElement.src;
-
+		
         this.volume = new AnimatedFloat(volume, function (_,_) updateVolume());
         updateVolume();
         _complete = new Value<Bool>(false);
-
+		
+		playOffset 	= offset;
+		playDuration = duration;
+		
         playAudio();
 
         // Don't start playing until visible
@@ -132,6 +142,12 @@ private class HtmlPlayback
         volume.update(dt);
         _complete._ = _clonedElement.ended;
 
+		if (_waitingToSeek && canSeekToOffset()) { // wanted to seek, but had to wait?
+			_waitingToSeek = false;
+			_clonedElement.currentTime = playOffset;
+			if (paused) paused = false;
+		}
+			
         if (_complete._ || paused) {
             // Allow complete or paused sounds to be garbage collected
             _tickableAdded = false;
@@ -139,18 +155,35 @@ private class HtmlPlayback
             // Release System references
             _volumeBinding.dispose();
             _hideBinding.dispose();
-
+			
             return true;
-        }
+			
+        } else {
+			
+			var now = _clonedElement.currentTime;
+			var end = playOffset + playDuration;
+			
+			
+			 if (_loop && !_clonedElement.loop) {
+				// want to loop, but a custom start/end range is specified
+				if (now >= end) _clonedElement.currentTime = playOffset;
+				
+			} else if(!_loop && playDuration > 0) {
+				// no loop, but have duration option - and are at or past the end time?
+				if (now >= end) dispose();	
+			}
+		}
+		
         return false;
     }
 
     public function dispose ()
     {
         paused = true;
-        _complete._ = true;
+		_waitingToSeek = false;
+        _complete._ = true; 
     }
-
+	
     private function playAudio ()
     {
         #if flambe_html_audio_fix
@@ -168,7 +201,17 @@ private class HtmlPlayback
         #end
 
         _clonedElement.play();
-
+		
+		if (playOffset > 0) {
+			
+			if (canSeekToOffset()) {
+				_clonedElement.currentTime = playOffset;
+			} else {
+				_waitingToSeek = true;
+				paused	= true;
+			}
+		}		
+		
         if (!_tickableAdded) {
             HtmlPlatform.instance.mainLoop.addTickable(this);
             _tickableAdded = true;
@@ -185,6 +228,25 @@ private class HtmlPlayback
             });
         }
     }
+	
+	function canSeekToOffset():Bool {	
+		
+		// Will throw a DOM Exception: INVALID_STATE_ERR if you try to set currentTime before it's 'ready'... so wait a bit. probably just a tick
+		
+		if (_clonedElement.readyState >= MediaElement.HAVE_METADATA) {
+			var n = _clonedElement.seekable.length;
+			var seekable = _clonedElement.seekable;
+			for (i in 0...n) {
+				var start 	= seekable.start(i);
+				var end 	= seekable.end(i);
+				if (start <= playOffset && playOffset < end) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
 
     private function updateVolume ()
     {
@@ -199,4 +261,6 @@ private class HtmlPlayback
     private var _wasPaused :Bool;
 
     private var _complete :Value<Bool>;
+	
+	var _waitingToSeek = false;
 }
