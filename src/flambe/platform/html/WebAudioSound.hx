@@ -229,7 +229,6 @@ private class WebAudioPlayback
         if (_sourceNode.playbackState == AudioBufferSourceNode.FINISHED_STATE) {
             _complete._ = true;
 			dispose();
-			return true;
         }
 		
         return false;
@@ -237,8 +236,7 @@ private class WebAudioPlayback
 
     public function dispose ()
     {
-		trace('dispose');
-        paused = true;
+		paused = true;
 		
 		if (_tickableAdded) {
 			_tickableAdded = false;
