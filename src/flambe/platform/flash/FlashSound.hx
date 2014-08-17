@@ -172,7 +172,10 @@ private class FlashPlayback
 				
 			} else if(!_loop && _playDuration > 0) {
 				// no loop, but have duration option - and are at or past the end time?
-				if (now >= end) dispose();	
+				if (now >= end) {
+					_complete._ = true;
+					dispose();	
+				}
 			}
 		}
 		
@@ -181,14 +184,33 @@ private class FlashPlayback
 
     public function dispose ()
     {
-        paused = true;
-        _complete._ = true;
+        _pausePosition = -1;
+        _complete = null;
+		
+		FlashPlatform.instance.mainLoop.removeTickable(this);
+		_tickableAdded = false;
+        
+		// Release references
+		if (_hideBinding != null) {
+			_hideBinding.dispose();
+			_hideBinding = null;
+		}
+		
+		if (_channel != null) {
+			_channel.removeEventListener(Event.SOUND_COMPLETE, onSoundComplete);
+			_channel.stop();
+			_channel = null;
+		}
     }
 
     private function onSoundComplete (_)
     {
-        if (_loop) playAudio(_playOffset, _channel.soundTransform);
-		else _complete._ = true;
+        if (_loop) {
+			playAudio(_playOffset, _channel.soundTransform);
+		} else {
+			_complete._ = true;
+			dispose();
+		}
     }
 
     private function playAudio (startPosition :Float, soundTransform :SoundTransform)

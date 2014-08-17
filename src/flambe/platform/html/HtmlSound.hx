@@ -85,7 +85,7 @@ private class HtmlPlayback
 
         // Create a copy of the original sound's element. Note that cloneNode() doesn't work in IE
         _clonedElement = Browser.document.createAudioElement();
-        _clonedElement.loop = _loop && (_playOffset==0&&_playDuration==0); // only use the .loop property for looping if offset + duration are not set.
+        _clonedElement.loop = _loop && (offset==0&&duration==0); // only use the .loop property for looping if offset + duration were not set.
         _clonedElement.src = sound.audioElement.src;
 		
         this.volume = new AnimatedFloat(volume, function (_,_) updateVolume());
@@ -174,7 +174,10 @@ private class HtmlPlayback
 				
 			} else if(!_loop && _playDuration > 0) {
 				// no loop, but have duration option - and are at or past the end time?
-				if (now >= end) dispose();	
+				if (now >= end) {
+					_complete._ = true;
+					dispose();	
+				}
 			}
 		}
 		
@@ -183,9 +186,22 @@ private class HtmlPlayback
 
     public function dispose ()
     {
-        paused = true;
+        HtmlPlatform.instance.mainLoop.removeTickable(this);
+        _tickableAdded = false;
+		paused = true;
 		_waitingToSeek = false;
-        _complete._ = true; 
+        _complete = null;
+		_clonedElement = null;
+		_sound = null;
+		// Release System references
+		if (_volumeBinding != null) {
+			_volumeBinding.dispose();
+			_volumeBinding = null;
+		}
+		if (_hideBinding != null) {
+			_hideBinding.dispose();
+			_hideBinding = null;
+		}
     }
 	
     private function playAudio ()
