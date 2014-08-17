@@ -44,6 +44,10 @@ class EmitterMold
     public var alphaStart :Float;
     public var alphaStartVariance :Float;
 
+    public var alphaEnd :Float;
+    public var alphaEndVariance :Float;
+
+	#if flambe_enable_tint
 	public var redStart:Float;
 	public var greenStart:Float;
 	public var blueStart:Float;
@@ -52,9 +56,6 @@ class EmitterMold
 	public var greenStartVariance:Float;
 	public var blueStartVariance:Float;
 	
-    public var alphaEnd :Float;
-    public var alphaEndVariance :Float;
-
 	public var redEnd:Float;
 	public var greenEnd:Float;
 	public var blueEnd:Float;
@@ -62,6 +63,7 @@ class EmitterMold
 	public var redEndVariance:Float;
 	public var greenEndVariance:Float;
 	public var blueEndVariance:Float;
+	#end
 	
     public var angle :Float;
     public var angleVariance :Float;
@@ -139,14 +141,18 @@ class EmitterMold
                 type = (Std.int(getValue(element)) == 0) ? Gravity : Radial;
             case "finishcolor":
                 alphaEnd 	= getFloat(element, "alpha");
+				#if flambe_enable_tint
 				redEnd		= getFloat(element, "red");
 				greenEnd	= getFloat(element, "green");
 				blueEnd 	= getFloat(element, "blue");
+				#end
             case "finishcolorvariance":
                 alphaEndVariance 	= getFloat(element, "alpha");
+				#if flambe_enable_tint
 				redEndVariance		= getFloat(element, "red");
 				greenEndVariance	= getFloat(element, "green");
 				blueEndVariance 	= getFloat(element, "blue");
+				#end
             case "finishparticlesize":
                 sizeEnd = getValue(element);
             case "finishparticlesizevariance":
@@ -192,14 +198,18 @@ class EmitterMold
                 speedVariance = getValue(element);
             case "startcolor":
                 alphaStart 	= getFloat(element, "alpha");
+				#if flambe_enable_tint
 				redStart	= getFloat(element, "red");
 				greenStart	= getFloat(element, "green");
 				blueStart 	= getFloat(element, "blue");
+				#end
             case "startcolorvariance":
                 alphaStartVariance 	= getFloat(element, "alpha");
+				#if flambe_enable_tint
 				redStartVariance	= getFloat(element, "red");
 				greenStartVariance	= getFloat(element, "green");
 				blueStartVariance 	= getFloat(element, "blue");
+				#end
             case "startparticlesize":
                 sizeStart = getValue(element);
             case "startparticlesizevariance":

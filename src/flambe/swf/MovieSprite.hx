@@ -177,6 +177,7 @@ class MovieSprite extends Sprite
     }
 
 	
+	#if flambe_enable_tint
 	// tint the children!
 	override public function setTint(r:Float, g:Float, b:Float, duration:Float=0, ease:EaseFunction=null):Sprite {
 		for (ani in _animators) {
@@ -185,6 +186,7 @@ class MovieSprite extends Sprite
 		}
 		return this;
 	}
+	#end
 
 	
     private function goto (newFrame :Float)

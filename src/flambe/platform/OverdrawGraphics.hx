@@ -104,9 +104,11 @@ class OverdrawGraphics
         _impl.onResize(width, height);
     }
 	
+	#if flambe_enable_tint
 	public function setTint(r:Float, g:Float, b:Float):Void {
 		_impl.setTint(r, g, b);
 	}
+	#end
 
     /** Draws an overdraw region rectangle. */
     private function drawRegion (x :Float, y :Float, width :Float, height :Float)

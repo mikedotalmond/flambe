@@ -18,9 +18,11 @@ class NineSlice extends Component {
 	public var width(get, set):Float;
 	public var height(get, set):Float;
 	
+	#if flambe_enable_tint
 	public var tintR(get, set):Float;
 	public var tintG(get, set):Float;
 	public var tintB(get, set):Float;
+	#end
 	
 	var parts		:Array<Sprite>;
 	
@@ -89,10 +91,11 @@ class NineSlice extends Component {
 		for (part in parts) owner.addChild(new Entity().add(part.disablePointer()));
 	}
 	
-	
+	#if flambe_enable_tint
 	public function setTint(r,g,b) {
 		for (part in parts) part.setTint(r, g, b);
 	}
+	#end
 	
 	
 	var _width:Float = 0;
@@ -160,7 +163,7 @@ class NineSlice extends Component {
 		return _y = value;
 	}
 	
-	
+	#if flambe_enable_tint
 	function get_tintR() return parts[0].tintR._;
 	function set_tintR(value:Float) {
 		for (part in parts) part.tintR._ = value;
@@ -178,4 +181,5 @@ class NineSlice extends Component {
 		for (part in parts) part.tintB._ = value;
 		return value;
 	}
+	#end
 }

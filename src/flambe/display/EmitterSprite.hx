@@ -40,6 +40,7 @@ class EmitterSprite extends Sprite
     public var alphaStart (default, null) :AnimatedFloat;
     public var alphaStartVariance (default, null) :AnimatedFloat;
 	
+	#if flambe_enable_tint
     public var redStart (default, null) :AnimatedFloat;
     public var redStartVariance (default, null) :AnimatedFloat;
 
@@ -57,7 +58,8 @@ class EmitterSprite extends Sprite
 
     public var blueEnd (default, null) :AnimatedFloat;
     public var blueEndVariance (default, null) :AnimatedFloat;
-
+	#end
+	
     public var alphaEnd (default, null) :AnimatedFloat;
     public var alphaEndVariance (default, null) :AnimatedFloat;
 
@@ -109,21 +111,25 @@ class EmitterSprite extends Sprite
 
         alphaEnd = new AnimatedFloat(mold.alphaEnd);
         alphaEndVariance = new AnimatedFloat(mold.alphaEndVariance);
-        redEnd = new AnimatedFloat(mold.redEnd);
+        
+		alphaStart = new AnimatedFloat(mold.alphaStart);
+        alphaStartVariance = new AnimatedFloat(mold.alphaStartVariance);
+		
+		#if flambe_enable_tint
+		redEnd = new AnimatedFloat(mold.redEnd);
         redEndVariance = new AnimatedFloat(mold.redEndVariance);
 		greenEnd = new AnimatedFloat(mold.greenEnd);
         greenEndVariance = new AnimatedFloat(mold.greenEndVariance);
 		blueEnd = new AnimatedFloat(mold.blueEnd);
         blueEndVariance = new AnimatedFloat(mold.blueEndVariance);
 		
-		alphaStart = new AnimatedFloat(mold.alphaStart);
-        alphaStartVariance = new AnimatedFloat(mold.alphaStartVariance);
 		redStart = new AnimatedFloat(mold.redStart);
         redStartVariance = new AnimatedFloat(mold.redStartVariance);
 		greenStart = new AnimatedFloat(mold.greenStart);
         greenStartVariance = new AnimatedFloat(mold.greenStartVariance);
 		blueStart = new AnimatedFloat(mold.blueStart);
         blueStartVariance = new AnimatedFloat(mold.blueStartVariance);
+		#end
 		
         angle = new AnimatedFloat(mold.angle);
         angleVariance = new AnimatedFloat(mold.angleVariance);
@@ -176,7 +182,10 @@ class EmitterSprite extends Sprite
         super.onUpdate(dt);
 
         alphaEnd.update(dt);
-        redEnd.update(dt);
+        alphaStart.update(dt);
+		 
+		#if flambe_enable_tint
+		redEnd.update(dt);
 		greenEnd.update(dt);
 		blueEnd.update(dt);
         alphaEndVariance.update(dt);
@@ -184,7 +193,6 @@ class EmitterSprite extends Sprite
 		greenEndVariance.update(dt);
 		blueEndVariance.update(dt);
 		
-        alphaStart.update(dt);
 		redStart.update(dt);
 		greenStart.update(dt);
 		blueStart.update(dt);
@@ -192,7 +200,8 @@ class EmitterSprite extends Sprite
 		redStartVariance.update(dt);
 		greenStartVariance.update(dt);
 		blueStartVariance.update(dt);
-        
+        #end
+		
 		angle.update(dt);
         angleVariance.update(dt);
         emitX.update(dt);
@@ -273,10 +282,13 @@ class EmitterSprite extends Sprite
                 particle.scale += particle.velScale * dt;
                 particle.rotation += particle.velRotation * dt;
                 particle.alpha += particle.velAlpha * dt;
-                particle.tintR += particle.velRed * dt;
+                
+				#if flambe_enable_tint
+				particle.tintR += particle.velRed * dt;
                 particle.tintG += particle.velGreen * dt;
                 particle.tintB += particle.velBlue * dt;
-
+				#end
+				
                 particle.life -= dt;
                 ++ii;
 
@@ -337,8 +349,10 @@ class EmitterSprite extends Sprite
                 g.scale(particle.scale, particle.scale);
             }
 			
+			#if flambe_enable_tint
 			g.setTint(particle.tintR, particle.tintG, particle.tintB);
-            g.drawTexture(texture, offset, offset);
+            #end
+			g.drawTexture(texture, offset, offset);
             g.restore();
 
             ++ii;
@@ -396,6 +410,7 @@ class EmitterSprite extends Sprite
         particle.alpha = alphaStart;
         particle.velAlpha = (alphaEnd-alphaStart) / particle.life;
 
+		#if flambe_enable_tint
 		var redStart = random(redStart._, redStartVariance._);
         var redEnd = random(redEnd._, redEndVariance._);
         particle.tintR = redStart;
@@ -410,6 +425,7 @@ class EmitterSprite extends Sprite
         var blueEnd = random(blueEnd._, blueEndVariance._);
         particle.tintB = blueStart;
         particle.velBlue = (blueEnd-blueStart) / particle.life;
+		#end
 		
         return true;
     }
@@ -485,12 +501,14 @@ private class Particle
 
     public var life :Float = 0;
 	
+	#if flambe_enable_tint
 	public var tintR:Float = 0;
 	public var tintG:Float = 0;
 	public var tintB:Float = 0;
 	public var velRed:Float = 0;
 	public var velGreen:Float = 0;
 	public var velBlue:Float = 0;
+	#end
 
     public function new () {}
 }

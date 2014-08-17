@@ -139,11 +139,15 @@ class Sprite extends Component
 		anchorY = new AnimatedFloat(0, dirtyMatrix);
 		
         alpha = new AnimatedFloat(1);
-        tintR = new AnimatedFloat(1);
+        
+		#if flambe_enable_tint
+		tintR = new AnimatedFloat(1);
         tintG = new AnimatedFloat(1);
         tintB = new AnimatedFloat(1);
+		#end
     }
 	
+	#if flambe_enable_tint
 	public var tintR(default, null):AnimatedFloat;
 	public var tintG(default, null):AnimatedFloat;
 	public var tintB(default, null):AnimatedFloat;
@@ -159,6 +163,7 @@ class Sprite extends Component
 		}
 		return this;
 	}
+	#end
 
     /**
      * Search for a sprite in the entity hierarchy lying under the given point, in local
@@ -226,13 +231,11 @@ class Sprite extends Component
                 return; // Prune traversal, this sprite and all children are invisible
             }
 
-			var tintR = sprite.tintR._;
-			var tintG = sprite.tintG._;
-			var tintB = sprite.tintB._;
-			
             g.save();
 			
+			#if flambe_enable_tint
 			g.setTint(sprite.tintR._, sprite.tintG._, sprite.tintB._);
+			#end
 			
 			if (alpha < 1) {
                 g.multiplyAlpha(alpha);
@@ -483,9 +486,11 @@ class Sprite extends Component
         rotation.update(dt);
         scaleX.update(dt);
         scaleY.update(dt);
+		#if flambe_enable_tint
 		tintR.update(dt);
 		tintG.update(dt);
 		tintB.update(dt);
+		#end
         alpha.update(dt);
         anchorX.update(dt);
         anchorY.update(dt);

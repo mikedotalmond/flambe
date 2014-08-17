@@ -162,9 +162,12 @@ class CanvasGraphics
         // Nothing at all
     }
 	
+	
+	#if flambe_enable_tint
 	public function setTint(r:Float, g:Float, b:Float):Void {
-		// not (yet) implemented
+		// not  implemented
 	}
+	#end
 
     private var _canvasCtx :CanvasRenderingContext2D;
     private var _firstDraw :Bool = false;
