@@ -117,7 +117,7 @@ class NapeMain {
 		world.add(gestureControl = new GestureControl());
 		gestureControl.gesture.connect(onGesture);
 		
-		#if !(android||ios)
+		#if !(firefox||android||ios)
 		if (System.keyboard.supported) System.keyboard.down.connect(onKey);		
 		#end
 		
@@ -166,7 +166,7 @@ class NapeMain {
 	}
 	
 	
-	#if !(android||ios)
+	#if !(firefox||android||ios)
 	function onKey(e:KeyboardEvent) {
 		
 		switch(e.key) {
