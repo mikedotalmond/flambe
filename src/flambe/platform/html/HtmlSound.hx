@@ -4,9 +4,9 @@
 
 package flambe.platform.html;
 
-import flambe.math.FMath;
 import js.Browser;
 
+import flambe.math.FMath;
 import flambe.animation.AnimatedFloat;
 import flambe.platform.Tickable;
 import flambe.sound.Playback;
@@ -65,7 +65,7 @@ private class HtmlPlayback
     public var volume (default, null) :AnimatedFloat;
     public var paused (get, set) :Bool;
     public var complete (get, null) :Value<Bool>;
-    public var position (get, set) :Float;
+    public var position (get, null) :Float;
     public var sound (get, null) :Sound;
 	
     public function new (sound :HtmlSound, volume :Float, loop :Bool, offset:Float=0, duration:Float=0)
@@ -130,11 +130,6 @@ private class HtmlPlayback
         return _clonedElement.currentTime;
     }
 	
-	public function set_position (value:Float) :Float
-    {
-        return _clonedElement.currentTime = value;
-    }
-
     public function update (dt :Float) :Bool
     {
         volume.update(dt);
@@ -249,7 +244,7 @@ private class HtmlPlayback
 	
 	function canSeekToOffset():Bool {	
 			
-		// Will throw a DOM Exception: INVALID_STATE_ERR if you try to set currentTime before it's 'ready'... so wait a bit. probably just a tick
+		//  Will throw a DOM Exception: INVALID_STATE_ERR if you try to set currentTime before it's 'ready'... so wait a bit. probably just a tick or two
 		// trace("canSeek ? " + _clonedElement.readyState);
 		
 		if (_clonedElement.readyState >= 1/*MediaElement.HAVE_METADATA*/) {
