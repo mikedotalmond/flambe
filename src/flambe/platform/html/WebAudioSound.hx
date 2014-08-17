@@ -75,7 +75,6 @@ class WebAudioSound extends BasicAsset<WebAudioSound>
             var AudioContext = HtmlUtil.loadExtension("AudioContext").value;
             if (AudioContext != null) {
                 ctx = untyped __new__(AudioContext);
-                
 				gain = createGain();
 				gain.connect(ctx.destination);
 				
@@ -94,7 +93,7 @@ class WebAudioSound extends BasicAsset<WebAudioSound>
         // https://developer.mozilla.org/en-US/docs/Web_Audio_API/Porting_webkitAudioContext_code_to_standards_based_AudioContext
         //return (ctx.createGain != null) ? ctx.createGain() : untyped ctx.createGainNode();
 		
-		//this appears to create/cause a runtime error in firefox.... something goes wrong in the bind function
+		//this appears to create/cause a runtime error in firefox.... something goes wrong in the bind function..?
 		
 		var gain = try {
 			ctx.createGain();

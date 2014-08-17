@@ -68,7 +68,7 @@ class DummyPlayback
     public var volume (default, null) :AnimatedFloat;
     public var paused (get, set) :Bool;
     public var complete (get, null) :Value<Bool>;
-    public var position (get, set) :Float;
+    public var position (get, null) :Float;
     public var sound (get, null) :Sound;
 
     public function new (sound :Sound)
@@ -99,11 +99,6 @@ class DummyPlayback
     }
 
     public function get_position () :Float
-    {
-        return 0;
-    }
-	
-	 public function set_position (value:Float) :Float
     {
         return 0;
     }
