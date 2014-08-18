@@ -112,9 +112,13 @@ class NapeMain {
 		
 		//
 		System.stage.resize.connect(onResize); 	
+		System.stage.orientation.changed.connect(function(a,b) {
+			if(a != b) onResize();
+		});
 		
 		//
 		world.add(gestureControl = new GestureControl());
+		gestureControl.gesture.connect(firstUserInteraction).once();
 		gestureControl.gesture.connect(onGesture);
 		
 		#if !(firefox||android||ios)
@@ -125,6 +129,7 @@ class NapeMain {
 		System.root.add(new flambe.nape.NapeDebugView(spaceComponent.napeSpace, camera));
 		#end
     }
+	
 	
 	
 	// -----------------------------------------------------------------------------------------
@@ -160,9 +165,17 @@ class NapeMain {
 		stageHeight = System.stage.height;
 	}
 	
+	/**
+	 * Triggered once at the start of the first (mouse/touch) user input...
+	 * @param	g
+	 */
+	function firstUserInteraction(g:Gesture) {
+		
+	}
+	
 	
 	function onGesture(g:Gesture) {
-		trace(g.toString());
+		
 	}
 	
 	
@@ -178,12 +191,13 @@ class NapeMain {
 			case Key.NumpadSubtract	: camera.controller.zoom.animateBy(-.2, .25, Ease.quadOut);
 			
 			
-			case Key.R				: if (System.keyboard.isDown(Key.Control)) 
+			case Key.R				: if (System.keyboard.isDown(Key.Control)){
 				#if html 
-					js.Browser.document.location.reload();
+				js.Browser.document.location.reload();
 				#elseif flash
-					flash.external.ExternalInterface.call('document.location.reload');
+				flash.external.ExternalInterface.call('document.location.reload');
 				#end
+			}
 			
 			default:
 				trace(e.key);
