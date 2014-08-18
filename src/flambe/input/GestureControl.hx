@@ -30,6 +30,10 @@ import haxe.Timer;
 	MOVE;
 }
 
+/**
+ * GestureControl component, based on https://github.com/rockswang/roxlib/blob/master/com/roxstudio/haxe/gesture/RoxGestureAgent.hx
+ * For recognising and handling Pointer or Multitouch gestures
+ */
 
 
 @:final class GestureControl extends Component {
