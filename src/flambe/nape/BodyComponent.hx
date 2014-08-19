@@ -53,9 +53,17 @@ class BodyComponent extends Component {
 		this.bounds = bounds;
     }
 
+	override public function onAdded() {
+		setup();
+	}
+	
 	override public function onStart() {
-		space		= world.get(SpaceComponent).napeSpace;
+		if (sprite == null || space == null) setup();
+	}
+	
+	function setup() {
 		sprite 		= owner.get(Sprite);
+		space  		= world.has(SpaceComponent) ? world.get(SpaceComponent).napeSpace : null;
 		body.space 	= space;
 	}
 
