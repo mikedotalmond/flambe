@@ -26,14 +26,14 @@ class HtmlSound extends BasicAsset<HtmlSound>
         this.audioElement = audioElement;
     }
 
-    public function play (volume :Float = 1.0, offset:Float=0, duration:Float=0) :Playback
+    public function play (volume :Float = 1.0, offset:Null<Float>=0, duration:Null<Float>=0) :Playback
     {
         assertNotDisposed();
 
         return new HtmlPlayback(this, volume, false, offset, duration);
     }
 
-    public function loop (volume :Float = 1.0, offset:Float=0, duration:Float=0) :Playback
+    public function loop (volume :Float = 1.0, offset:Null<Float>=0, duration:Null<Float>=0) :Playback
     {
         assertNotDisposed();
 

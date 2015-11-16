@@ -36,14 +36,14 @@ class WebAudioSound extends BasicAsset<WebAudioSound>
         this.buffer = buffer;
     }
 
-    public function play (volume :Float = 1.0, offset:Float=0, duration:Float=0) :Playback
+    public function play (volume :Float = 1.0, offset:Null<Float>=0, duration:Null<Float>=0) :Playback
     {
         assertNotDisposed();
 
         return new WebAudioPlayback(this, volume, false, offset, duration);
     }
 
-    public function loop (volume :Float = 1.0, offset:Float=0, duration:Float=0) :Playback
+    public function loop (volume :Float = 1.0, offset:Null<Float>=0, duration:Null<Float>=0) :Playback
     {
         assertNotDisposed();
 
@@ -98,7 +98,7 @@ class WebAudioSound extends BasicAsset<WebAudioSound>
 		var gain = try {
 			ctx.createGain();
 		} catch (err:Dynamic) {
-			Reflect.callMethod(ctx, 'createGainNode', []);
+			Reflect.callMethod(ctx, ctx.createGainNode, []);
 		}
 		
 		return gain;
